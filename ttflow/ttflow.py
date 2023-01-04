@@ -21,6 +21,7 @@ from .core.workflow import (
     _find_event_triggered_workflows,
     _find_workflow,
     exec_workflow,
+    subeffect,
     workflow,
 )
 from .system_states.event_log import _add_event_log
@@ -77,6 +78,9 @@ class Client:
 
     def workflow(self, trigger: Optional[Trigger] = None):
         return workflow(self._global, trigger)
+
+    def subeffect(self):
+        return subeffect(self._global)
 
     def get_state(self, c: Context, state_name: str, default: Any = None):
         return get_state(self._global, c, state_name, default)

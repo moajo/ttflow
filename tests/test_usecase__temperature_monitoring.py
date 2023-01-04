@@ -30,7 +30,7 @@ def _define_workflow_for_test(client: Client):
             notification_to_app(context, "温度が低すぎます")
             ttflow.set_state(context, "温度状態", "red")
 
-    @ttflow.workflow()
+    @ttflow.subeffect()
     def notification_to_app(context: Context, message: str):
         # ここでアプリに通知を送信する
         ttflow.log(context, f"通知ダミー: {message}")
@@ -38,7 +38,7 @@ def _define_workflow_for_test(client: Client):
 
 def test_温度監視ユースケースの処理1(client: Client):
     _define_workflow_for_test(client)
-    assert len(client._global.workflows) == 3
+    assert len(client._global.workflows) == 2
 
     client.run()
     _enque_webhook(client._global, "温度変化", {"温度": 20})  # 20なので温度状態は変化しない

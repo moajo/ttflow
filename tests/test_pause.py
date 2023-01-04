@@ -26,12 +26,12 @@ def _define_workflow_for_test(ttflow: Client):
         ttflow.set_state(context, "CD完了回数", c + 1)
         notification_to_app(context, "CD完了")
 
-    @ttflow.workflow()
+    @ttflow.subeffect()
     def notification_to_app(context: Context, message: str):
         # ここでアプリに通知を送信する
         ttflow.log(context, f"通知ダミー: {message}")
 
-    @ttflow.workflow()
+    @ttflow.subeffect()
     def 承認待ち(context: Context):
         notification_to_app(context, f"承認事項がが1件あります:{context.run_id}")
         ttflow.wait_event(context, f"承認:{context.run_id}")
@@ -42,7 +42,7 @@ def test_中断機能が正しく動くこと(client: Client):
     _define_workflow_for_test(client)
     s = client._global.state
     assert isinstance(s, OnMemoryStateRepository)
-    assert len(client._global.workflows) == 3
+    assert len(client._global.workflows) == 1
 
     assert s.read_state("CD開始回数") is None
     assert s.read_state("CD完了回数") is None

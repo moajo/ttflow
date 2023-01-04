@@ -5,8 +5,11 @@ from typing import Any, Optional
 
 from ..system_states.completed import add_completed_runs_log, add_failed_runs_log
 from ..system_states.logs import _get_logs
-from ..system_states.run_state import _is_already_executed, _mark_as_executed
-from ..system_states.run_state import _delete_run_state
+from ..system_states.run_state import (
+    _delete_run_state,
+    _is_already_executed,
+    _mark_as_executed,
+)
 from .context import Context
 from .global_env import Global, Workflow
 from .pause import PauseException, _save_paused_workflow
@@ -95,15 +98,30 @@ def workflow(g: Global, trigger: Optional[Trigger] = None):
         g.workflows.append(wf)
 
         @functools.wraps(f)
-        def hoge_wrapper(*args, **kwargs):
-            if len(args) != 0 and isinstance(args[0], Context):
-                c = args[0]
-                if _is_already_executed(g, c) is not None:
-                    return
-                return _mark_as_executed(g, c, f(*args, **kwargs))
-            else:
-                raise RuntimeError("workflowはContextを引数に取る必要があります")
+        def _wrapper(*args, **kwargs):
+            raise RuntimeError("workflow can not be called directly")
 
-        return hoge_wrapper
+        return _wrapper
 
     return _decorator
+
+
+def subeffect(g: Global):
+    def _decorator(f):
+        @functools.wraps(f)
+        def _wrapper(*args, **kwargs):
+            if len(args) == 0 or not isinstance(args[0], Context):
+                raise RuntimeError("subeffectはContextを第1引数に取る必要があります")
+            c = args[0]
+            if _is_already_executed(g, c) is not None:
+                return
+            return _mark_as_executed(g, c, f(*args, **kwargs))
+
+        return _wrapper
+
+    return _decorator
+
+
+# @ttflow.subeffectとかを作る。副作用専用の
+# runをやめて、webhookを必ずトリガーにするように一本化する
+# webhookじゃなくてhookにする
