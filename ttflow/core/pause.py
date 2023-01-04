@@ -2,7 +2,9 @@ import time
 from typing import Any
 
 from ..state_repository.base import StateRepository
+from ..system_states.event_log import _get_event_logs
 from .context import Context
+from .global_env import Global
 
 # ワークフローの中断
 # ワークフローは中断時にPauseExceptionを投げる。
@@ -56,8 +58,8 @@ def _remove_paused_workflow(s: StateRepository, pause_id: str):
             return
 
 
-def _wait_event(s: StateRepository, c: Context, event_name: str):
-    # s = _get_state()
+def _wait_event(g: Global, c: Context, event_name: str):
+    s = g.state
     c._use()
     pause_id = f"{c.run_id}:{c.used_count}"
 
@@ -65,7 +67,7 @@ def _wait_event(s: StateRepository, c: Context, event_name: str):
     if paused_wf is None:
         raise PauseException(pause_id)
     # 既にpaused、先に進むか判断する
-    event_log = s.read_state("event_log", default=[])
+    event_log = _get_event_logs(g)
     target_events = [
         a
         for a in event_log

@@ -6,7 +6,7 @@ from ..core.state import get_state, set_state
 
 
 def _log_key():
-    return "completed"
+    return "_completed"
 
 
 def add_completed_runs_log(g: Global, c: Context):
@@ -16,7 +16,7 @@ def add_completed_runs_log(g: Global, c: Context):
             "run_id": c.run_id,
         }
     )
-    set_state(g, c, _log_key(), logs)
+    g.state.save_state(_log_key(), logs)
 
 
 def get_completed_runs_log(g: Global, c: Context):

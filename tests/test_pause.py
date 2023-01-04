@@ -71,6 +71,7 @@ def test_中断機能が正しく動くこと(client: Client):
     # 承認する
     _enque_event(client._global, f"承認:{run_id}", None)
     client.run()
+    client.run()  # イベントループより先に中断再開判定が入るので、2回実行する
     assert len(s.read_state("paused_workflows", default=[])) == 0
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") == 1

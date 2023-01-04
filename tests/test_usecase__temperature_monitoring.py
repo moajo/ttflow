@@ -2,6 +2,7 @@ import pytest
 from ttflow.core import _enque_webhook
 from ttflow.system_states.completed import _get_completed_runs_log
 from ttflow.ttflow import Client, Context, webhook_trigger, state_trigger
+from ttflow.system_states.event_log import _get_event_logs
 
 
 def _define_workflow_for_test(client: Client):
@@ -45,12 +46,10 @@ def test_温度監視ユースケースの処理1(client: Client):
     client.run()
     assert [a["event_name"] for a in client._global.events] == []
     assert len(_get_completed_runs_log(client._global)) == 2, "実行されたのは2回"
-    assert [a["event_name"] for a in s.read_state("event_log", default=[])] == [
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == [
         "workflows_changed",
         "_webhook_温度変化",
         "state_changed_温度",  # 実行によってstateが更新される
-        "state_changed_completed",
-        "state_changed_completed",
     ]
 
 
@@ -72,48 +71,36 @@ def test_温度監視ユースケースの処理__温度状態が正しく変化
     s = client._global.state
     if expect == "none":
         assert len(_get_completed_runs_log(client._global)) == 2
-        assert [
-            a["event_name"]
-            for a in client._global.state.read_state("event_log", default=[])
-        ] == [
+        assert [a["event_name"] for a in _get_event_logs(client._global)] == [
             "workflows_changed",
             "_webhook_温度変化",
             "state_changed_温度",
-            "state_changed_completed",
-            "state_changed_completed",
         ]
     elif expect == "high":
         assert len(_get_completed_runs_log(client._global)) == 2
         run_id = _get_completed_runs_log(client._global)[-1]["run_id"]
-        assert [
-            a["event_name"]
-            for a in client._global.state.read_state("event_log", default=[])
-        ] == [
+        assert [a["event_name"] for a in _get_event_logs(client._global)] == [
             "workflows_changed",
             "_webhook_温度変化",
             "state_changed_温度",
-            "state_changed_completed",
             f"state_changed_logs:{run_id}",
             "state_changed_温度状態",
-            "state_changed_completed",
         ]
-        assert client._global.state.read_state("event_log")[5]["args"] == {
+        assert _get_event_logs(client._global)[4]["args"] == {
             "old": None,
             "new": "green",
         }
     elif expect == "low":
         assert len(_get_completed_runs_log(client._global)) == 2
         run_id = _get_completed_runs_log(client._global)[-1]["run_id"]
-        assert [a["event_name"] for a in s.read_state("event_log", default=[])] == [
+        assert [a["event_name"] for a in _get_event_logs(client._global)] == [
             "workflows_changed",
             "_webhook_温度変化",
             "state_changed_温度",
-            "state_changed_completed",
             f"state_changed_logs:{run_id}",
             "state_changed_温度状態",
-            "state_changed_completed",
         ]
-        assert s.read_state("event_log")[5]["args"] == {
+        assert _get_event_logs(client._global)[4]["args"] == {
             "old": None,
             "new": "red",
         }
@@ -132,10 +119,8 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
         "workflows_changed",
         "_webhook_温度変化",
         "state_changed_温度",
-        "state_changed_completed",
-        "state_changed_completed",
     ]
-    assert [a["event_name"] for a in s.read_state("event_log", default=[])] == event_log
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == event_log
     assert s.read_state("温度状態") is None
 
     # stateが変化し、温度状態も変化
@@ -146,13 +131,11 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
         [
             "_webhook_温度変化",
             "state_changed_温度",
-            "state_changed_completed",
             f"state_changed_logs:{run_id}",
             "state_changed_温度状態",
-            "state_changed_completed",
         ]
     )
-    assert [a["event_name"] for a in s.read_state("event_log", default=[])] == event_log
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == event_log
     assert s.read_state("温度状態") == "green"
 
     # stateが変化するが、温度状態は変化しない
@@ -162,11 +145,9 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
         [
             "_webhook_温度変化",
             "state_changed_温度",
-            "state_changed_completed",
-            "state_changed_completed",
         ]
     )
-    assert [a["event_name"] for a in s.read_state("event_log", default=[])] == event_log
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == event_log
     assert s.read_state("温度状態") == "green"
 
     # 同じ値なのでstateは変化しない
@@ -175,10 +156,9 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
     event_log.extend(
         [
             "_webhook_温度変化",
-            "state_changed_completed",
         ]
     )
-    assert [a["event_name"] for a in s.read_state("event_log", default=[])] == event_log
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == event_log
     assert s.read_state("温度状態") == "green"
 
     # 温度は変わるが低すぎではない
@@ -188,11 +168,9 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
         [
             "_webhook_温度変化",
             "state_changed_温度",
-            "state_changed_completed",
-            "state_changed_completed",
         ]
     )
-    assert [a["event_name"] for a in s.read_state("event_log", default=[])] == event_log
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == event_log
     assert s.read_state("温度状態") == "green"
 
     # 温度は低すぎ
@@ -203,13 +181,11 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
         [
             "_webhook_温度変化",
             "state_changed_温度",
-            "state_changed_completed",
             f"state_changed_logs:{run_id}",
             "state_changed_温度状態",
-            "state_changed_completed",
         ]
     )
-    assert [a["event_name"] for a in s.read_state("event_log", default=[])] == event_log
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == event_log
     assert s.read_state("温度状態") == "red"
 
     # 温度は普通に戻るが高すぎない
@@ -219,9 +195,7 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
         [
             "_webhook_温度変化",
             "state_changed_温度",
-            "state_changed_completed",
-            "state_changed_completed",
         ]
     )
-    assert [a["event_name"] for a in s.read_state("event_log", default=[])] == event_log
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == event_log
     assert s.read_state("温度状態") == "red"

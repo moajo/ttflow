@@ -57,7 +57,7 @@
         ],
         "old": null
       },
-      "event_name": "state_changed_completed",
+      "event_name": "state_changed__completed",
       "timestamp": 1672810202.6672761
     },
     {
@@ -89,7 +89,7 @@
           }
         ]
       },
-      "event_name": "state_changed_completed",
+      "event_name": "state_changed__completed",
       "timestamp": 1672811026.3836842
     }
   ],

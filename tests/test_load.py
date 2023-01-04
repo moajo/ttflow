@@ -1,5 +1,6 @@
 from ttflow.system_states.completed import _get_completed_runs_log
 from ttflow.ttflow import Client, Context, event_trigger
+from ttflow.system_states.event_log import _get_event_logs
 
 
 def _define_workflow_for_test(client: Client):
@@ -20,14 +21,10 @@ def test_正常系(client: Client):
 
     client.run()
 
-    assert [
-        a["event_name"]
-        for a in client._global.state.read_state("event_log", default=[])
-    ] == [
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == [
         # "state_changed_workflow_loaded_successfull",  # 初回なので発行される
         "workflows_changed",  # 初回なので発行される
         "state_changed_デプロイ回数",  # 初回なので発行される
-        "state_changed_completed",
     ]
     assert len(_get_completed_runs_log(client._global)) == 1
 
@@ -39,13 +36,9 @@ def test_正常系2(client: Client):
 
     client.run()
 
-    assert [
-        a["event_name"]
-        for a in client._global.state.read_state("event_log", default=[])
-    ] == [
+    assert [a["event_name"] for a in _get_event_logs(client._global)] == [
         "workflows_changed",  # 初回なので発行される
         "state_changed_デプロイ回数",  # 初回なので発行される
-        "state_changed_completed",
     ]
     assert len(_get_completed_runs_log(client._global)) == 1
 

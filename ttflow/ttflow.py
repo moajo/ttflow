@@ -1,6 +1,7 @@
 import time
 from pathlib import Path
 from typing import Any, Optional
+import logging
 
 from .core.context import Context
 from .core.event import _enque_event, iterate_events, _enque_webhook
@@ -10,7 +11,12 @@ from .core.state import get_state, set_state
 from .core.trigger import EventTrigger, Trigger
 from .core.workflow import _get_workflows, exec_workflow, workflow
 from .system_states.logs import log
+from .system_states.event_log import _add_event_log
 from .utils import workflow_hash
+
+logging.basicConfig(level=logging.DEBUG)
+
+logger = logging.getLogger(__name__)
 
 
 def webhook_trigger(name: str) -> Trigger:
@@ -59,46 +65,24 @@ class Client:
         return log(self._global, c, message)
 
     def wait_event(self, c: Context, event_name: str):
-        _wait_event(self._global.state, c, event_name)
+        _wait_event(self._global, c, event_name)
 
     def run(self):
-        print("ワークフローをロードします")
+        logger.info("check registered workflows")
+
         # デプロイイベントの対応
         h = workflow_hash(self._global.registerer.workflows)
-        s = self._global.state
-        current_hash = s.read_state("workflows_hash")
+        current_hash = self._global.state.read_state("workflows_hash")
         if current_hash != h:
-            _enque_event(self._global, "workflows_changed", None)
-            s.save_state("workflows_hash", h)
-        s = self._global.state
-        print("実行します")
-
-        # イベントを処理する
-        print("イベント処理開始")
-        for e in iterate_events(self._global):
-            event_name = e["event_name"]
-            args = e["args"]
-            event_log = s.read_state("event_log", default=[])
-            event_log.append(
-                {
-                    "event_name": event_name,
-                    "args": args,
-                    "timestamp": time.time(),
-                }
+            logger.info(
+                f"workflow is changed from last run. hash: {current_hash} -> {h}"
             )
-            s.save_state("event_log", event_log)
-            for wf in _get_workflows(self._global):
-                if (
-                    isinstance(wf.trigger, EventTrigger)
-                    and wf.trigger.event_name == event_name
-                ):
-                    print("イベントに対応するワークフローを実行します: ", wf.f.__name__)
-                    c = Context(wf.f.__name__)
-                    exec_workflow(self._global, c, wf, args)
+            _enque_event(self._global, "workflows_changed", None)
+            self._global.state.save_state("workflows_hash", h)
 
         # PAUSEDのワークフローを再開する
         for p in iterate_paused_workflows(self._global.state):
-            print("再開します: ", p["workflow_name"])
+            logger.info(f"resume paused workflow: {p['workflow_name']}")
             args = p["args"]
             wf = [
                 a
@@ -107,6 +91,26 @@ class Client:
             ][0]
             c = Context(wf.f.__name__, run_id=p["run_id"])
             exec_workflow(self._global, c, wf, args)
+
+        logger.info("start event loop")
+        for e in iterate_events(self._global):
+            event_name = e["event_name"]
+            args = e["args"]
+            _add_event_log(
+                self._global,
+                event_name,
+                args,
+            )
+            for wf in _get_workflows(self._global):
+                if (
+                    isinstance(wf.trigger, EventTrigger)
+                    and wf.trigger.event_name == event_name
+                ):
+                    logger.info(
+                        f"run workflow '{wf.f.__name__}' triggered by event '{event_name}'"
+                    )
+                    c = Context(wf.f.__name__)
+                    exec_workflow(self._global, c, wf, args)
 
     def euqueue_webhook(self, name: str, args: Any):
         """

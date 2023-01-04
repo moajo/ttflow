@@ -1,4 +1,5 @@
 from ttflow.ttflow import Client, Context, event_trigger
+from ttflow.system_states.event_log import _get_event_logs
 
 
 def _define_workflow_for_test(client: Client):
@@ -24,7 +25,7 @@ def test_ワークフローハッシュが計算されること(client: Client):
         len(
             [
                 a
-                for a in s.read_state("event_log", default=[])
+                for a in _get_event_logs(client._global)
                 if a["event_name"] == "workflows_changed"
             ]
         )
@@ -38,7 +39,7 @@ def test_ワークフローハッシュが計算されること(client: Client):
         len(
             [
                 a
-                for a in s.read_state("event_log", default=[])
+                for a in _get_event_logs(client._global)
                 if a["event_name"] == "workflows_changed"
             ]
         )
