@@ -62,6 +62,9 @@ from contextlib import contextmanager
 
 @contextmanager
 def _lock_state(g: Global):
+    if g.state.is_locked():
+        logger.info("state is locked. skip run.")
+        raise ValueError("state is locked")
     g.state.lock_state()
     try:
         yield
