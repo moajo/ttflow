@@ -83,10 +83,9 @@ def test_温度監視ユースケースの処理__温度状態が正しく変化
             "workflows_changed",
             "_webhook_温度変化",
             "state_changed_温度",
-            f"state_changed_logs:{run_id}",
             "state_changed_温度状態",
         ]
-        assert _get_event_logs(client._global)[4]["args"] == {
+        assert _get_event_logs(client._global)[3]["args"] == {
             "old": None,
             "new": "green",
         }
@@ -97,10 +96,9 @@ def test_温度監視ユースケースの処理__温度状態が正しく変化
             "workflows_changed",
             "_webhook_温度変化",
             "state_changed_温度",
-            f"state_changed_logs:{run_id}",
             "state_changed_温度状態",
         ]
-        assert _get_event_logs(client._global)[4]["args"] == {
+        assert _get_event_logs(client._global)[3]["args"] == {
             "old": None,
             "new": "red",
         }
@@ -131,7 +129,6 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
         [
             "_webhook_温度変化",
             "state_changed_温度",
-            f"state_changed_logs:{run_id}",
             "state_changed_温度状態",
         ]
     )
@@ -181,7 +178,6 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
         [
             "_webhook_温度変化",
             "state_changed_温度",
-            f"state_changed_logs:{run_id}",
             "state_changed_温度状態",
         ]
     )

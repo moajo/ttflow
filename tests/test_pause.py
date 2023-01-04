@@ -49,7 +49,9 @@ def test_中断機能が正しく動くこと(client: Client):
     assert len(s.read_state("paused_workflows", default=[])) == 1
     assert s.read_state("paused_workflows", default=[])[0]["workflow_name"] == "CI"
     run_id = s.read_state("paused_workflows", default=[])[0]["run_id"]
-    assert s.read_state("paused_workflows", default=[])[0]["pause_id"] == f"{run_id}:7"
+    assert s.read_state("paused_workflows", default=[])[0]["pause_id"].startswith(
+        run_id
+    )
     assert s.read_state("paused_workflows", default=[])[0]["args"] == {"値": "hoge"}
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") is None

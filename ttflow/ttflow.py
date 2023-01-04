@@ -96,6 +96,7 @@ class Client:
         for e in iterate_events(self._global):
             event_name = e["event_name"]
             args = e["args"]
+            logger.info(f"processing event '{event_name}'")
             _add_event_log(
                 self._global,
                 event_name,
@@ -122,6 +123,17 @@ class Client:
             args (Any): _description_
         """
         _enque_webhook(self._global, name, args)
+
+    def euqueue_event(self, name: str, args: Any):
+        """
+        eventの発生をstateにキューイングします。
+        次回のrun()で実行されます。
+
+        Args:
+            name (str): _description_
+            args (Any): _description_
+        """
+        _enque_event(self._global, name, args)
 
 
 def setup(

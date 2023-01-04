@@ -2,6 +2,7 @@ import functools
 from typing import Any, Optional
 
 from ..system_states.completed import add_completed_runs_log
+from ..system_states.run_state import _delete_run_state
 from .context import Context
 from .global_env import Global
 from .pause import PauseException, _save_paused_workflow
@@ -49,6 +50,7 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> bool:
         )
         return False
     add_completed_runs_log(g, c)
+    _delete_run_state(g, c.run_id)
     return True
     # TODO: そのうちワークフロー実行後イベントを実装
 

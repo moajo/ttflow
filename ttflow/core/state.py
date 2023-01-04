@@ -3,25 +3,21 @@ from typing import Any
 from .context import Context
 from .event import _enque_event
 from .global_env import Global
+from ..system_states.run_state import _is_already_executed, _mark_as_executed
 
 
 # ステートを書き込む。再実行時は何もしない
 def set_state(g: Global, c: Context, state_name: str, value):
-    c._use()
-    set_state_id = f"{c.run_id}:{c.used_count}"
-    set_state_cache = g.state.read_state("_set_state_cache", default={})
-    if set_state_id in set_state_cache:
+    if _is_already_executed(g, c) is not None:
         return
-    set_state_cache[set_state_id] = value
-    g.state.save_state("_set_state_cache", set_state_cache)
     write_state_with_changed_event(g, state_name, value)
+    _mark_as_executed(g, c, None)
 
 
 # ステートを書き込み、変更があったら差分イベントを発行する
 def write_state_with_changed_event(g: Global, state_name: str, value):
-    s = g.state
-    current_state = s.read_state(state_name)
-    s.save_state(state_name, value)
+    current_state = g.state.read_state(state_name)
+    g.state.save_state(state_name, value)
     if current_state != value:
         _enque_event(
             g,
@@ -30,15 +26,21 @@ def write_state_with_changed_event(g: Global, state_name: str, value):
         )
 
 
-# ステートを取得する。再実行時はキャッシュする
 def get_state(g: Global, c: Context, state_name: str, default: Any = None):
-    s = g.state
-    c._use()
-    get_state_id = f"{c.run_id}:{c.used_count}"
-    get_state_cache = s.read_state("_get_state_cache", default={})
-    if get_state_id in get_state_cache:
-        return get_state_cache[get_state_id]
+    """ステートを取得する。再実行時はキャッシュする
 
-    get_state_cache[get_state_id] = s.read_state(state_name, default=default)
-    s.save_state("_get_state_cache", get_state_cache)
-    return get_state_cache[get_state_id]
+    Args:
+        g (Global): _description_
+        c (Context): _description_
+        state_name (str): _description_
+        default (Any, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    cache = _is_already_executed(g, c)
+    if cache is not None:
+        return cache.value
+
+    value = g.state.read_state(state_name, default=default)
+    return _mark_as_executed(g, c, value)

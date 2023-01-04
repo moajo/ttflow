@@ -1,18 +1,24 @@
 from ..core.context import Context
 from ..core.global_env import Global
 from ..core.state import get_state, set_state
+from ..system_states.run_state import _is_already_executed, _mark_as_executed
 
 # ログの実態は単にrun_idに紐づくstateである
 
 
 def _log_key(run_id):
-    return f"logs:{run_id}"
+    return f"_logs:{run_id}"
 
 
 def log(g: Global, c: Context, message: str):
-    logs = get_state(g, c, _log_key(c.run_id), [])
-    logs.append(f"[ワークフローのログ]{message}")
-    set_state(g, c, _log_key(c.run_id), logs)
+    if _is_already_executed(g, c) is not None:
+        return
+    txt = f"[ワークフローのログ]{message}"
+    print(txt)
+    logs = g.state.read_state(_log_key(c.run_id), default=[])
+    logs.append(txt)
+    g.state.save_state(_log_key(c.run_id), logs)
+    _mark_as_executed(g, c, None)
 
 
 def get_logs(g: Global, c: Context):

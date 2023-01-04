@@ -6,7 +6,7 @@ def _define_workflow(ttflow: Client):
     # 外部から温度変化を受信する
     @ttflow.workflow(trigger=event_trigger("workflows_changed"))
     def ワークフローのデプロイイベント(context: Context, webhook_args: dict):
-        print("ワークフローのデプロイイベントが発生しました")
+        ttflow.log(context, "ワークフローのデプロイイベントが発生した")
         c = ttflow.get_state(context, "デプロイ回数")
         if c is None:
             c = 0
@@ -33,29 +33,26 @@ def _define_workflow(ttflow: Client):
                 return
             notification_to_app(context, "温度が低すぎます")
             ttflow.set_state(context, "温度状態", "red")
-            承認待ち(context, "温度低下アクションを承認してください")
+            承認待ち(context)
 
     def notification_to_app(context: Context, message: str):
         # ここでアプリに通知を送信する
         ttflow.log(context, f"通知ダミー: {message}")
 
-    # @ttflow.workflow(trigger=ttflow.webhook("承認"))
-    # def 承認イベント(context:Context,webhook_args:dict):
-    #     event_id = webhook_args["承認イベントID"]
-    #     ttflow.event(context, f"承認:{event_id}")
-
-    # @ttflow.workflow()
-    # def 承認待ち(context:Context, message:str):
-    #     event_id = 1111
-    #     notification_to_app(context, "承認事項がが1件あります")
-    #     # send_承認(event_id) などとして承認依頼を送信する
-    #     ttflow.wait_event(context, f"承認:{event_id}")
-
     @ttflow.workflow()
-    def 承認待ち(context: Context, message: str):
+    def 承認待ち(context: Context):
         notification_to_app(context, f"承認事項がが1件あります:{context.run_id}")
         ttflow.wait_event(context, f"承認:{context.run_id}")
-        print("承認待ち終了")
+        ttflow.log(context, "承認待ち終了")
+
+    @ttflow.workflow(trigger=webhook_trigger("承認"))
+    def 承認受信(context: Context, webhook_args: dict):
+        auth_id = webhook_args.get("id")
+        if auth_id is None:
+            ttflow.log(context, "不明なIDの承認が発生した")
+            return
+
+        ttflow.euqueue_event(f"承認:{auth_id}", None)
 
 
 def webhook(name: str, arg: dict, state_rpository: str = "local:state.json"):
@@ -63,6 +60,8 @@ def webhook(name: str, arg: dict, state_rpository: str = "local:state.json"):
         state_repository=state_rpository,
     )
     ttflow.euqueue_webhook(name, arg)
+    _define_workflow(ttflow)
+    ttflow.run()
 
 
 def run(state_rpository: str = "local:state.json"):

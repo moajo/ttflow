@@ -7,7 +7,6 @@ def _define_workflow_for_test(client: Client):
     # 外部から温度変化を受信する
     @client.workflow(trigger=event_trigger("workflows_changed"))
     def ワークフローのデプロイイベント(context: Context, webhook_args: dict):
-        print("ワークフローのデプロイイベントが発生しました")
         c = client.get_state(context, "デプロイ回数")
         if c is None:
             c = 0
