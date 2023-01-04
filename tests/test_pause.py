@@ -1,23 +1,51 @@
 import json
-from pathlib import Path
 
-from ttflow.core import _enque_event, _enque_webhook, _global, load_workflows
-from ttflow.core.global_env import _get_state
+from ttflow.core import _enque_event, _enque_webhook
+from ttflow.state_repository.on_memory_state import OnMemoryStateRepository
 from ttflow.system_states.logs import _get_logs
-from ttflow.ttflow import do_ttflow
+from ttflow.ttflow import Client, Context
 
 
-def test_中断機能が正しく動くこと(reset_global):
-    s = _get_state()
-    assert load_workflows(Path(__file__).parent / "data/workflow_for_test_pause")
-    assert len(_global.registerer.workflows) == 3
-    assert s.read_state("workflow_loaded_successfull")
+def _define_workflow_for_test(ttflow: Client):
+    @ttflow.workflow(trigger=ttflow.webhook("デプロイCD"))
+    def CI(context: Context, webhook_args: dict):
+        c = ttflow.get_state(context, "CD開始回数")
+        if c is None:
+            c = 0
+        ttflow.set_state(context, "CD開始回数", c + 1)
+        hoge = webhook_args["値"]
+        notification_to_app(context, f"{c}回目のCDを開始します: {hoge}")
+        承認待ち(context)
+
+        c = ttflow.get_state(context, "CD完了回数")
+        if c is None:
+            c = 0
+        ttflow.set_state(context, "CD完了回数", c + 1)
+        notification_to_app(context, "CD完了")
+
+    @ttflow.workflow()
+    def notification_to_app(context: Context, message: str):
+        # ここでアプリに通知を送信する
+        ttflow.log(context, f"通知ダミー: {message}")
+
+    @ttflow.workflow()
+    def 承認待ち(context: Context):
+        notification_to_app(context, f"承認事項がが1件あります:{context.run_id}")
+        ttflow.wait_event(context, f"承認:{context.run_id}")
+        ttflow.log(context, "承認されました")
+
+
+def test_中断機能が正しく動くこと(client: Client):
+    _define_workflow_for_test(client)
+    s = client._global.state
+    assert isinstance(s, OnMemoryStateRepository)
+    assert len(client._global.registerer.workflows) == 3
 
     assert s.read_state("CD開始回数") is None
     assert s.read_state("CD完了回数") is None
 
-    _enque_webhook("デプロイCD", {"値": "hoge"})
-    do_ttflow()
+    _enque_webhook(client._global, "デプロイCD", {"値": "hoge"})
+    client.do_ttflow()
     assert len(s.read_state("paused_workflows", default=[])) == 1
     assert s.read_state("paused_workflows", default=[])[0]["workflow_name"] == "CI"
     run_id = s.read_state("paused_workflows", default=[])[0]["run_id"]
@@ -25,31 +53,28 @@ def test_中断機能が正しく動くこと(reset_global):
     assert s.read_state("paused_workflows", default=[])[0]["args"] == {"値": "hoge"}
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") is None
-    assert _get_logs(run_id) == [
+    assert _get_logs(client._global, run_id) == [
         "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
         f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
     ]
 
-    current = json.dumps(
-        _global.state.state, indent=2, sort_keys=True, ensure_ascii=False
-    )
-    do_ttflow()
+    current = json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False)
+    client.do_ttflow()
     assert (
-        json.dumps(_global.state.state, indent=2, sort_keys=True, ensure_ascii=False)
-        == current
+        json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False) == current
     ), "stateが変化していないこと"
-    assert _get_logs(run_id) == [
+    assert _get_logs(client._global, run_id) == [
         "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
         f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
     ]
 
     # 承認する
-    _enque_event(f"承認:{run_id}", None)
-    do_ttflow()
+    _enque_event(client._global, f"承認:{run_id}", None)
+    client.do_ttflow()
     assert len(s.read_state("paused_workflows", default=[])) == 0
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") == 1
-    assert _get_logs(run_id) == [
+    assert _get_logs(client._global, run_id) == [
         "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
         f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
         "[ワークフローのログ]承認されました",

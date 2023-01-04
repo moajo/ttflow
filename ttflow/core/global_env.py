@@ -17,19 +17,3 @@ class Global:
 
         # イベントキュー
         self.events = []
-
-
-_global = Global()
-
-
-def reset_global_registerer():
-    _global.registerer.reset()
-
-
-def reset_global():
-    _global.registerer.reset()
-    _global.events = []
-
-
-def _get_state() -> StateRepository:
-    return _global.state

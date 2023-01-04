@@ -15,3 +15,10 @@ def get_dir_hash(directory: str):
                         break
                     hash.update(buf)
     return hash.hexdigest()
+
+
+def workflow_hash(workflows):
+    hash = hashlib.sha1()
+    for wf in workflows:
+        hash.update(wf.f.__code__.co_code)
+    return hash.hexdigest()

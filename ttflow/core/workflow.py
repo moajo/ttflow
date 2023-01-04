@@ -1,16 +1,10 @@
 import functools
-import importlib
-import sys
-from pathlib import Path
 from typing import Any, Optional
 
-from .. import utils
 from ..system_states.completed import add_completed_runs_log
 from .context import Context
-from .event import _enque_event
-from .global_env import _get_state, _global, reset_global_registerer
+from .global_env import Global
 from .pause import PauseException, _save_paused_workflow
-from .state import write_state_with_changed_event
 from .trigger import NullTrigger, Trigger
 
 
@@ -20,15 +14,15 @@ class Workflow:
         self.f = f
 
 
-def _add_workflow(wf: Workflow):
-    _global.registerer.workflows.append(wf)
+def _add_workflow(g: Global, wf: Workflow):
+    g.registerer.workflows.append(wf)
 
 
-def _get_workflows() -> list[Workflow]:
-    return _global.registerer.workflows
+def _get_workflows(g: Global) -> list[Workflow]:
+    return g.registerer.workflows
 
 
-def exec_workflow(c: Context, wf: Workflow, args: Any) -> bool:
+def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> bool:
     """workflowを実行する
     中断する場合、paused_workflowsステートにその状態を保存する
     完了したらcompleted_runs_logステートに記録する
@@ -41,7 +35,7 @@ def exec_workflow(c: Context, wf: Workflow, args: Any) -> bool:
     Returns:
         bool: _description_
     """
-    s = _get_state()
+    s = g.state
     try:
         wf.f(c, args)
     except PauseException as e:
@@ -54,15 +48,15 @@ def exec_workflow(c: Context, wf: Workflow, args: Any) -> bool:
             args=args,
         )
         return False
-    add_completed_runs_log(c)
+    add_completed_runs_log(g, c)
     return True
     # TODO: そのうちワークフロー実行後イベントを実装
 
 
-def workflow(trigger: Optional[Trigger] = None):
+def workflow(g: Global, trigger: Optional[Trigger] = None):
     def _decorator(f):
         wf = Workflow(trigger if trigger is not None else NullTrigger(), f)
-        _add_workflow(wf)
+        _add_workflow(g, wf)
 
         @functools.wraps(f)
         def hoge_wrapper(*args, **kwargs):
@@ -71,27 +65,3 @@ def workflow(trigger: Optional[Trigger] = None):
         return hoge_wrapper
 
     return _decorator
-
-
-def load_workflows(workflow_dir: Path):
-    print("ワークフローをロードします")
-    try:
-        sys.path.insert(1, str(workflow_dir))
-        m = importlib.import_module("index")
-        reset_global_registerer()
-        importlib.reload(m)
-        sys.path.remove(str(workflow_dir))
-        write_state_with_changed_event("workflow_loaded_successfull", True)
-
-        # デプロイイベントの対応
-        h = utils.get_dir_hash(str(workflow_dir))
-        s = _global.state
-        current_hash = s.read_state("workflows_hash")
-        if current_hash != h:
-            _enque_event("workflows_changed", None)
-            s.save_state("workflows_hash", h)
-        return True
-    except Exception as e:
-        print("ワークフローの読み込みに失敗しました", e)
-        write_state_with_changed_event("workflow_loaded_successfull", False)
-        return False

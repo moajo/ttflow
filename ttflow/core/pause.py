@@ -3,7 +3,6 @@ from typing import Any
 
 from ..state_repository.base import StateRepository
 from .context import Context
-from .global_env import _get_state
 
 # ワークフローの中断
 # ワークフローは中断時にPauseExceptionを投げる。
@@ -57,8 +56,8 @@ def _remove_paused_workflow(s: StateRepository, pause_id: str):
             return
 
 
-def _wait_event(c: Context, event_name: str):
-    s = _get_state()
+def _wait_event(s: StateRepository, c: Context, event_name: str):
+    # s = _get_state()
     c._use()
     pause_id = f"{c.run_id}:{c.used_count}"
 
@@ -79,8 +78,8 @@ def _wait_event(c: Context, event_name: str):
         raise PauseException(pause_id)
 
 
-def iterate_paused_workflows():
-    s = _get_state()
+def iterate_paused_workflows(s: StateRepository):
+    # s = _get_state()
     paused_workflows = s.read_state("paused_workflows", default=[])
     for p in paused_workflows:
         yield p

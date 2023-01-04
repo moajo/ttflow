@@ -1,18 +1,25 @@
-from pathlib import Path
-
-from ttflow.core import _get_state, _global, load_workflows
-from ttflow.ttflow import do_ttflow
+from ttflow.ttflow import Client, Context
 
 
-def test_ワークフローハッシュが計算されること(reset_global):
-    s = _get_state()
-    assert load_workflows(
-        Path(__file__).parent / "data/workflow_for_test_load_workflow_hash_1"
-    )
-    assert len(_global.registerer.workflows) == 1
-    assert s.read_state("workflow_loaded_successfull")
+def _define_workflow_for_test(client: Client):
+    # 外部から温度変化を受信する
+    @client.workflow(trigger=client.event("workflows_changed"))
+    def ワークフローのデプロイイベント(context: Context, webhook_args: dict):
+        print("ワークフローのデプロイイベントが発生しました")
+        c = client.get_state(context, "デプロイ回数")
+        if c is None:
+            c = 0
+        client.set_state(context, "デプロイ回数", c + 1)
+
+
+def test_ワークフローハッシュが計算されること(client: Client):
+    _define_workflow_for_test(client)
+
+    s = client._global.state
+    assert len(client._global.registerer.workflows) == 1
+    assert s.read_state("workflows_hash") is None
+    client.run()
     assert s.read_state("workflows_hash") is not None
-    do_ttflow()
     assert (
         len(
             [
@@ -25,7 +32,7 @@ def test_ワークフローハッシュが計算されること(reset_global):
     ), "workflows_changedが発行されていること"
 
     h = s.read_state("workflows_hash")
-    do_ttflow()
+    client.do_ttflow()
     assert s.read_state("workflows_hash") == h
     assert (
         len(
@@ -39,14 +46,12 @@ def test_ワークフローハッシュが計算されること(reset_global):
     ), "workflows_changedが2回発行されていないこと"
 
 
-def test_workflows_changedイベントが正しく処理されること(reset_global):
-    s = _get_state()
-    assert load_workflows(
-        Path(__file__).parent / "data/workflow_for_test_load_workflow_hash_1"
-    )
+def test_workflows_changedイベントが正しく処理されること(client: Client):
+    _define_workflow_for_test(client)
+    s = client._global.state
 
     assert s.read_state("デプロイ回数", default=0) == 0
-    do_ttflow()
+    client.run()
     assert s.read_state("デプロイ回数") == 1
-    do_ttflow()
+    client.run()
     assert s.read_state("デプロイ回数") == 1
