@@ -1,5 +1,5 @@
 import fire
-from ttflow import Context, setup, webhook_trigger, event_trigger, state_trigger, Client
+from ttflow import Client, Context, event_trigger, setup, state_trigger, webhook_trigger
 
 
 def _define_workflow(ttflow: Client):

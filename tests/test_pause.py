@@ -1,9 +1,12 @@
 import json
 
 from ttflow.core import _enque_event, _enque_webhook
+from ttflow.core.event import _read_events_from_state
 from ttflow.state_repository.on_memory_state import OnMemoryStateRepository
 from ttflow.system_states.logs import _get_logs
 from ttflow.ttflow import Client, Context, webhook_trigger
+
+from .utils import create_client_for_test
 
 
 def _define_workflow_for_test(ttflow: Client):
@@ -39,32 +42,37 @@ def test_中断機能が正しく動くこと(client: Client):
     _define_workflow_for_test(client)
     s = client._global.state
     assert isinstance(s, OnMemoryStateRepository)
-    assert len(client._global.registerer.workflows) == 3
+    assert len(client._global.workflows) == 3
 
     assert s.read_state("CD開始回数") is None
     assert s.read_state("CD完了回数") is None
 
     _enque_webhook(client._global, "デプロイCD", {"値": "hoge"})
     client.run()
-    assert len(s.read_state("paused_workflows", default=[])) == 1
-    assert s.read_state("paused_workflows", default=[])[0]["workflow_name"] == "CI"
-    run_id = s.read_state("paused_workflows", default=[])[0]["run_id"]
-    assert s.read_state("paused_workflows", default=[])[0]["pause_id"].startswith(
-        run_id
-    )
-    assert s.read_state("paused_workflows", default=[])[0]["args"] == {"値": "hoge"}
+    paused_event = _read_events_from_state(client._global)
+    assert len(client._global.events_for_next_run) == 0, "commitされてるので0"
+    assert len(paused_event) == 1
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") is None
+    run_id = paused_event[0].args["run_id"]
     assert _get_logs(client._global, run_id) == [
         "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
         f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
     ]
 
-    current = json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False)
+    current = json.loads(
+        json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False)
+    )
+    current["_events"] = []  # paused eventは更新されるので無視する
     client.run()
-    assert (
-        json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False) == current
-    ), "stateが変化していないこと"
+    paused_event = _read_events_from_state(client._global)
+    assert len(client._global.events_for_next_run) == 0, "commitされてるので0"
+    assert len(paused_event) == 1
+    new_state = json.loads(
+        json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False)
+    )
+    new_state["_events"] = []  # paused eventは更新されるので無視する
+    assert new_state == current, "stateが変化していないこと"
     assert _get_logs(client._global, run_id) == [
         "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
         f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
@@ -73,10 +81,41 @@ def test_中断機能が正しく動くこと(client: Client):
     # 承認する
     _enque_event(client._global, f"承認:{run_id}", None)
     client.run()
-    client.run()  # イベントループより先に中断再開判定が入るので、2回実行する
     assert len(s.read_state("paused_workflows", default=[])) == 0
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") == 1
+    assert _get_logs(client._global, run_id) == [
+        "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
+        f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
+        "[ワークフローのログ]承認されました",
+        "[ワークフローのログ]通知ダミー: CD完了",
+    ]
+
+
+def test_中断イベントは永続化される():
+    client = create_client_for_test()
+    _define_workflow_for_test(client)
+
+    _enque_webhook(client._global, "デプロイCD", {"値": "hoge"})
+    client.run()
+    assert len(client._global.events_for_next_run) == 0, "commitされてるので0"
+    paused_event = _read_events_from_state(client._global)
+    assert len(paused_event) == 1
+
+    # reloadする
+    client._global.purge_events()
+    _define_workflow_for_test(client)
+    client.run()
+    assert len(client._global.events_for_next_run) == 0, "commitされてるので0"
+    paused_event = _read_events_from_state(client._global)
+    assert len(paused_event) == 1
+    run_id = paused_event[0].args["run_id"]
+
+    # 承認する
+    _enque_event(client._global, f"承認:{run_id}", None)
+    client.run()
+    assert client._global.state.read_state("CD開始回数") == 1
+    assert client._global.state.read_state("CD完了回数") == 1
     assert _get_logs(client._global, run_id) == [
         "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
         f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",

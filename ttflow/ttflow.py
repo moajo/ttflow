@@ -1,17 +1,28 @@
-import time
+import logging
 from pathlib import Path
 from typing import Any, Optional
-import logging
 
 from .core.context import Context
-from .core.event import _enque_event, iterate_events, _enque_webhook
+from .core.event import (
+    _enque_event,
+    _enque_webhook,
+    flush_events_for_next_run_to_state,
+    iterate_events,
+    load_events_from_state,
+)
 from .core.global_env import Global
-from .core.pause import _wait_event, iterate_paused_workflows
+from .core.pause import _wait_event
 from .core.state import get_state, set_state
+from .core.system_events.pause import try_parse_pause_event
 from .core.trigger import EventTrigger, Trigger
-from .core.workflow import _get_workflows, exec_workflow, workflow
-from .system_states.logs import log
+from .core.workflow import (
+    _find_event_triggered_workflows,
+    _find_workflow,
+    exec_workflow,
+    workflow,
+)
 from .system_states.event_log import _add_event_log
+from .system_states.logs import log
 from .utils import workflow_hash
 
 logging.basicConfig(level=logging.DEBUG)
@@ -71,7 +82,7 @@ class Client:
         logger.info("check registered workflows")
 
         # デプロイイベントの対応
-        h = workflow_hash(self._global.registerer.workflows)
+        h = workflow_hash(self._global.workflows)
         current_hash = self._global.state.read_state("workflows_hash")
         if current_hash != h:
             logger.info(
@@ -80,38 +91,48 @@ class Client:
             _enque_event(self._global, "workflows_changed", None)
             self._global.state.save_state("workflows_hash", h)
 
-        # PAUSEDのワークフローを再開する
-        for p in iterate_paused_workflows(self._global.state):
-            logger.info(f"resume paused workflow: {p['workflow_name']}")
-            args = p["args"]
-            wf = [
-                a
-                for a in _get_workflows(self._global)
-                if a.f.__name__ == p["workflow_name"]
-            ][0]
-            c = Context(wf.f.__name__, run_id=p["run_id"])
-            exec_workflow(self._global, c, wf, args)
+        # 未処理イベントをロードする
+        load_events_from_state(self._global)
 
         logger.info("start event loop")
         for e in iterate_events(self._global):
-            event_name = e["event_name"]
-            args = e["args"]
-            logger.info(f"processing event '{event_name}'")
-            _add_event_log(
-                self._global,
-                event_name,
-                args,
-            )
-            for wf in _get_workflows(self._global):
-                if (
-                    isinstance(wf.trigger, EventTrigger)
-                    and wf.trigger.event_name == event_name
-                ):
+            event_name = e.event_name
+            args = e.args
+            # NOTE: system eventは数が多くユーザがあまりhookするべきではないのでevent logには記録しない
+            if (pause_event := try_parse_pause_event(e)) is not None:
+                c = Context(
+                    pause_event.workflow_name,
+                    run_id=pause_event.run_id,
+                    paused_info=args,
+                )
+                wf = _find_workflow(self._global, pause_event.workflow_name)
+                if wf is not None:
+                    logger.info(f"workflow '{wf.f.__name__}' resuming")
+                    exec_workflow(self._global, c, wf, args["args"])
+            elif event_name.startswith("_"):
+                logger.info(f"processing system event '{event_name}'")
+                for wf in _find_event_triggered_workflows(self._global, event_name):
+                    logger.info(f"'{wf.f.__name__}' triggered by event '{event_name}'")
+                    c = Context(wf.f.__name__)
+                    exec_workflow(self._global, c, wf, args)
+            else:
+                logger.info(f"processing event '{event_name}'")
+                _add_event_log(
+                    self._global,
+                    event_name,
+                    args,
+                )
+                for wf in _find_event_triggered_workflows(self._global, event_name):
                     logger.info(
                         f"run workflow '{wf.f.__name__}' triggered by event '{event_name}'"
                     )
                     c = Context(wf.f.__name__)
                     exec_workflow(self._global, c, wf, args)
+
+        logger.info("do post processes")
+        # eventを永続化してメモリ上から消す
+        flush_events_for_next_run_to_state(self._global)
+        self._global.purge_events()
 
     def euqueue_webhook(self, name: str, args: Any):
         """

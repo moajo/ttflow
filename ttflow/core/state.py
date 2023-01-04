@@ -1,9 +1,9 @@
 from typing import Any
 
+from ..system_states.run_state import _is_already_executed, _mark_as_executed
 from .context import Context
 from .event import _enque_event
 from .global_env import Global
-from ..system_states.run_state import _is_already_executed, _mark_as_executed
 
 
 # ステートを書き込む。再実行時は何もしない

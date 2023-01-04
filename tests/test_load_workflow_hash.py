@@ -1,5 +1,5 @@
-from ttflow.ttflow import Client, Context, event_trigger
 from ttflow.system_states.event_log import _get_event_logs
+from ttflow.ttflow import Client, Context, event_trigger
 
 
 def _define_workflow_for_test(client: Client):
@@ -16,7 +16,7 @@ def test_ワークフローハッシュが計算されること(client: Client):
     _define_workflow_for_test(client)
 
     s = client._global.state
-    assert len(client._global.registerer.workflows) == 1
+    assert len(client._global.workflows) == 1
     assert s.read_state("workflows_hash") is None
     client.run()
     assert s.read_state("workflows_hash") is not None

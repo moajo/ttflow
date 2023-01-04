@@ -1,6 +1,6 @@
 from ..core.context import Context
 from ..core.global_env import Global
-from ..core.state import get_state, set_state
+from ..core.state import get_state
 from ..system_states.run_state import _is_already_executed, _mark_as_executed
 
 # ログの実態は単にrun_idに紐づくstateである

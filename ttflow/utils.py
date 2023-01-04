@@ -1,5 +1,4 @@
 import hashlib
-import os
 
 
 def workflow_hash(workflows):

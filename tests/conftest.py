@@ -1,11 +1,8 @@
 import pytest
-from ttflow import setup
-from ttflow.state_repository.on_memory_state import OnMemoryStateRepository
+
+from .utils import create_client_for_test
 
 
 @pytest.fixture
 def client():
-    c = setup()
-    c._global.events = []
-    c._global.state = OnMemoryStateRepository()
-    return c
+    return create_client_for_test()

@@ -1,28 +1,29 @@
 {
   "_completed": [
     {
-      "run_id": "721081031"
+      "run_id": "984630968",
+      "timestamp": 1672820215.979603,
+      "workflow_name": "温度変化受信"
     },
     {
-      "run_id": "829477864"
+      "run_id": "926793231",
+      "timestamp": 1672820215.981218,
+      "workflow_name": "ワークフローのデプロイイベント"
     },
     {
-      "run_id": "416360168"
+      "run_id": "603056674",
+      "timestamp": 1672820215.982482,
+      "workflow_name": "温度変化"
     },
     {
-      "run_id": "473503807"
+      "run_id": "363089745",
+      "timestamp": 1672820339.440775,
+      "workflow_name": "温度変化受信"
     },
     {
-      "run_id": "240460172"
-    },
-    {
-      "run_id": "471438231"
-    },
-    {
-      "run_id": "225442529"
-    },
-    {
-      "run_id": "58322641"
+      "run_id": "677102835",
+      "timestamp": 1672820342.797941,
+      "workflow_name": "温度変化受信"
     }
   ],
   "_event_log": [
@@ -31,12 +32,12 @@
         "温度": 20
       },
       "event_name": "_webhook_温度変化",
-      "timestamp": 1672818801.411056
+      "timestamp": 1672820215.978833
     },
     {
       "args": null,
       "event_name": "workflows_changed",
-      "timestamp": 1672818801.411985
+      "timestamp": 1672820215.979887
     },
     {
       "args": {
@@ -44,17 +45,7 @@
         "old": null
       },
       "event_name": "state_changed_温度",
-      "timestamp": 1672818801.41375
-    },
-    {
-      "args": {
-        "new": [
-          "[ワークフローのログ]ワークフローのデプロイイベントが発生した"
-        ],
-        "old": null
-      },
-      "event_name": "state_changed_logs:829477864",
-      "timestamp": 1672818801.414697
+      "timestamp": 1672820215.9817228
     },
     {
       "args": {
@@ -62,14 +53,21 @@
         "old": null
       },
       "event_name": "state_changed_デプロイ回数",
-      "timestamp": 1672818801.415024
+      "timestamp": 1672820215.9830132
+    },
+    {
+      "args": {
+        "温度": 20
+      },
+      "event_name": "_webhook_温度変化",
+      "timestamp": 1672820339.4393458
     },
     {
       "args": {
         "温度": 10
       },
       "event_name": "_webhook_温度変化",
-      "timestamp": 1672818806.323586
+      "timestamp": 1672820342.796322
     },
     {
       "args": {
@@ -77,17 +75,7 @@
         "old": 20
       },
       "event_name": "state_changed_温度",
-      "timestamp": 1672818806.326174
-    },
-    {
-      "args": {
-        "new": [
-          "[ワークフローのログ]通知ダミー: 温度が低すぎます"
-        ],
-        "old": null
-      },
-      "event_name": "state_changed_logs:225442529",
-      "timestamp": 1672818806.329008
+      "timestamp": 1672820342.798408
     },
     {
       "args": {
@@ -95,141 +83,53 @@
         "old": null
       },
       "event_name": "state_changed_温度状態",
-      "timestamp": 1672818806.329251
-    },
-    {
-      "args": {
-        "new": [
-          "[ワークフローのログ]通知ダミー: 温度が低すぎます",
-          "[ワークフローのログ]通知ダミー: 承認事項がが1件あります:225442529"
-        ],
-        "old": [
-          "[ワークフローのログ]通知ダミー: 温度が低すぎます"
-        ]
-      },
-      "event_name": "state_changed_logs:225442529",
-      "timestamp": 1672818806.329501
-    },
-    {
-      "args": {
-        "温度": 10
-      },
-      "event_name": "_webhook_承認:225442529",
-      "timestamp": 1672818854.6516101
-    },
-    {
-      "args": {
-        "温度": 20
-      },
-      "event_name": "_webhook_承認:225442529",
-      "timestamp": 1672818885.644408
-    },
-    {
-      "args": {
-        "温度": 20
-      },
-      "event_name": "_webhook_承認:225442529",
-      "timestamp": 1672818917.783693
-    },
-    {
-      "args": {
-        "温度": 20
-      },
-      "event_name": "_webhook_承認:225442529",
-      "timestamp": 1672818965.691905
-    },
-    {
-      "args": {
-        "温度": 20
-      },
-      "event_name": "_webhook_承認:225442529",
-      "timestamp": 1672819021.10417
-    },
-    {
-      "args": {
-        "id": "225442529"
-      },
-      "event_name": "_webhook_承認",
-      "timestamp": 1672819260.5904331
-    },
-    {
-      "args": null,
-      "event_name": "workflows_changed",
-      "timestamp": 1672819260.592105
-    },
-    {
-      "args": null,
-      "event_name": "承認:225442529",
-      "timestamp": 1672819260.596125
-    },
-    {
-      "args": {
-        "new": [
-          "[ワークフローのログ]ワークフローのデプロイイベントが発生した"
-        ],
-        "old": null
-      },
-      "event_name": "state_changed_logs:471438231",
-      "timestamp": 1672819260.5965052
-    },
-    {
-      "args": {
-        "new": 2,
-        "old": 1
-      },
-      "event_name": "state_changed_デプロイ回数",
-      "timestamp": 1672819260.596905
-    },
-    {
-      "args": {
-        "id": "225442529"
-      },
-      "event_name": "_webhook_承認",
-      "timestamp": 1672819348.4298089
-    },
-    {
-      "args": {
-        "new": [
-          "[ワークフローのログ]通知ダミー: 温度が低すぎます",
-          "[ワークフローのログ]通知ダミー: 承認事項がが1件あります:225442529",
-          "[ワークフローのログ]承認待ち終了"
-        ],
-        "old": [
-          "[ワークフローのログ]通知ダミー: 温度が低すぎます",
-          "[ワークフローのログ]通知ダミー: 承認事項がが1件あります:225442529"
-        ]
-      },
-      "event_name": "state_changed_logs:225442529",
-      "timestamp": 1672819348.431299
-    },
-    {
-      "args": null,
-      "event_name": "承認:225442529",
-      "timestamp": 1672819348.431684
+      "timestamp": 1672820342.8017569
     }
   ],
-  "_run_state:225442529": [],
-  "_run_state:240460172": [],
-  "_run_state:416360168": [],
-  "_run_state:471438231": [],
-  "_run_state:473503807": [],
-  "_run_state:58322641": [],
-  "_run_state:721081031": [],
-  "_run_state:829477864": [],
-  "logs:225442529": [
+  "_logs:126927873": [
     "[ワークフローのログ]通知ダミー: 温度が低すぎます",
-    "[ワークフローのログ]通知ダミー: 承認事項がが1件あります:225442529",
-    "[ワークフローのログ]承認待ち終了"
+    "[ワークフローのログ]通知ダミー: 承認事項がが1件あります:126927873"
   ],
-  "logs:471438231": [
+  "_logs:926793231": [
     "[ワークフローのログ]ワークフローのデプロイイベントが発生した"
   ],
-  "logs:829477864": [
-    "[ワークフローのログ]ワークフローのデプロイイベントが発生した"
+  "_run_state:126927873": [
+    {
+      "token": "126927873:1",
+      "value": null
+    },
+    {
+      "token": "126927873:2",
+      "value": null
+    },
+    {
+      "token": "126927873:3",
+      "value": null
+    },
+    {
+      "token": "126927873:4",
+      "value": null
+    }
   ],
-  "paused_workflows": [],
+  "_run_state:363089745": [],
+  "_run_state:603056674": [],
+  "_run_state:677102835": [],
+  "_run_state:926793231": [],
+  "_run_state:984630968": [],
+  "paused_workflows": [
+    {
+      "args": {
+        "new": 10,
+        "old": 20
+      },
+      "pause_id": "126927873:5",
+      "run_id": "126927873",
+      "timestamp": 1672820342.801297,
+      "workflow_name": "温度変化"
+    }
+  ],
   "workflows_hash": "3671a794ef231157bc2846c1173db71f16686593",
-  "デプロイ回数": 2,
+  "デプロイ回数": 1,
   "温度": 10,
   "温度状態": "red"
 }
