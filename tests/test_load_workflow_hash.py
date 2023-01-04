@@ -1,15 +1,15 @@
+from ttflow import Client, RunContext, event_trigger
 from ttflow.system_states.event_log import _get_event_logs
-from ttflow.ttflow import Client, Context, event_trigger
 
 
 def _define_workflow_for_test(client: Client):
     # 外部から温度変化を受信する
     @client.workflow(trigger=event_trigger("workflows_changed"))
-    def ワークフローのデプロイイベント(context: Context, webhook_args: dict):
-        c = client.get_state(context, "デプロイ回数")
-        if c is None:
-            c = 0
-        client.set_state(context, "デプロイ回数", c + 1)
+    def ワークフローのデプロイイベント(c: RunContext, args: dict):
+        count = c.get_state("デプロイ回数")
+        if count is None:
+            count = 0
+        c.set_state("デプロイ回数", count + 1)
 
 
 def test_ワークフローハッシュが計算されること(client: Client):

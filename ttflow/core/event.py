@@ -33,10 +33,10 @@ def _enque_event(
         g.events_for_next_run.append(e)
 
 
-# webhookは実態としては単にイベントである
-def _enque_webhook(g: Global, name: str, args: Any, process_immediately: bool = True):
-    # webhookは即時実行
-    _enque_event(g, f"_webhook_{name}", args, process_immediately=True)
+# triggerは実態としては単にイベントである
+def _enque_trigger(g: Global, name: str, args: Any):
+    # triggerなので即時実行
+    _enque_event(g, f"_trigger_{name}", args, process_immediately=True)
 
 
 def load_events_from_state(g: Global):

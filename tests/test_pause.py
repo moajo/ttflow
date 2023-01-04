@@ -1,41 +1,41 @@
 import json
 
-from ttflow.core import _enque_event, _enque_webhook
+from ttflow import Client, RunContext
+from ttflow.core import _enque_event
 from ttflow.core.event import _read_events_from_state
 from ttflow.state_repository.on_memory_state import OnMemoryStateRepository
 from ttflow.system_states.logs import _get_logs
-from ttflow.ttflow import Client, Context, webhook_trigger
 
 from .utils import create_client_for_test
 
 
 def _define_workflow_for_test(ttflow: Client):
-    @ttflow.workflow(trigger=webhook_trigger("デプロイCD"))
-    def CI(context: Context, webhook_args: dict):
-        c = ttflow.get_state(context, "CD開始回数")
-        if c is None:
-            c = 0
-        ttflow.set_state(context, "CD開始回数", c + 1)
-        hoge = webhook_args["値"]
-        notification_to_app(context, f"{c}回目のCDを開始します: {hoge}")
-        承認待ち(context)
+    @ttflow.workflow(trigger="デプロイCD")
+    def CI(c: RunContext, args: dict):
+        count = c.get_state("CD開始回数")
+        if count is None:
+            count = 0
+        c.set_state("CD開始回数", count + 1)
+        hoge = args["値"]
+        notification_to_app(c, f"{count}回目のCDを開始します: {hoge}")
+        承認待ち(c)
 
-        c = ttflow.get_state(context, "CD完了回数")
-        if c is None:
-            c = 0
-        ttflow.set_state(context, "CD完了回数", c + 1)
-        notification_to_app(context, "CD完了")
+        count = c.get_state("CD完了回数")
+        if count is None:
+            count = 0
+        c.set_state("CD完了回数", count + 1)
+        notification_to_app(c, "CD完了")
 
     @ttflow.subeffect()
-    def notification_to_app(context: Context, message: str):
+    def notification_to_app(c: RunContext, message: str):
         # ここでアプリに通知を送信する
-        ttflow.log(context, f"通知ダミー: {message}")
+        c.log(f"通知ダミー: {message}")
 
     @ttflow.subeffect()
-    def 承認待ち(context: Context):
-        notification_to_app(context, f"承認事項がが1件あります:{context.run_id}")
-        ttflow.wait_event(context, f"承認:{context.run_id}")
-        ttflow.log(context, "承認されました")
+    def 承認待ち(c: RunContext):
+        notification_to_app(c, f"承認事項がが1件あります:{c.get_context_data().run_id}")
+        c.wait_event(f"承認:{c.get_context_data().run_id}")
+        c.log("承認されました")
 
 
 def test_中断機能が正しく動くこと(client: Client):
@@ -47,8 +47,7 @@ def test_中断機能が正しく動くこと(client: Client):
     assert s.read_state("CD開始回数") is None
     assert s.read_state("CD完了回数") is None
 
-    _enque_webhook(client._global, "デプロイCD", {"値": "hoge"})
-    results = client.run()
+    results = client.run("デプロイCD", {"値": "hoge"})
     assert len(results) == 1
     assert results[0].workflow_name == "CI"
     assert results[0].status == "paused"
@@ -124,8 +123,7 @@ def test_中断イベントは永続化される():
     client = create_client_for_test()
     _define_workflow_for_test(client)
 
-    _enque_webhook(client._global, "デプロイCD", {"値": "hoge"})
-    client.run()
+    client.run("デプロイCD", {"値": "hoge"})
     assert len(client._global.events_for_next_run) == 0, "commitされてるので0"
     paused_event = _read_events_from_state(client._global)
     assert len(paused_event) == 1

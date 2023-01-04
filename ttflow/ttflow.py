@@ -1,19 +1,17 @@
 import logging
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from .core.context import Context
 from .core.event import (
     _enque_event,
-    _enque_webhook,
+    _enque_trigger,
     flush_events_for_next_run_to_state,
     iterate_events,
     load_events_from_state,
 )
 from .core.global_env import Global
-from .core.pause import _wait_event
-from .core.state import get_state, set_state
 from .core.system_events.pause import try_parse_pause_event
 from .core.trigger import EventTrigger, Trigger
 from .core.workflow import (
@@ -25,22 +23,9 @@ from .core.workflow import (
     workflow,
 )
 from .system_states.event_log import _add_event_log
-from .system_states.logs import log
 from .utils import workflow_hash
 
 logger = logging.getLogger(__name__)
-
-
-def webhook_trigger(name: str) -> Trigger:
-    """webhookトリガー
-
-    Args:
-        name (str): _description_
-
-    Returns:
-        Trigger: _description_
-    """
-    return EventTrigger(f"_webhook_{name}")
 
 
 def event_trigger(name: str) -> Trigger:
@@ -76,25 +61,22 @@ class Client:
     def __init__(self, _global: Global):
         self._global = _global
 
-    def workflow(self, trigger: Optional[Trigger] = None):
+    def workflow(self, trigger: Optional[Union[Trigger, str]] = None):
         return workflow(self._global, trigger)
 
     def subeffect(self):
         return subeffect(self._global)
 
-    def get_state(self, c: Context, state_name: str, default: Any = None):
-        return get_state(self._global, c, state_name, default)
+    def run(self, trigger_name: Optional[str] = None, args: Any = None):
+        """
+        トリガーに基づいてワークフローを実行します
 
-    def set_state(self, c: Context, state_name: str, value):
-        set_state(self._global, c, state_name, value)
-
-    def log(self, c: Context, message: str):
-        return log(self._global, c, message)
-
-    def wait_event(self, c: Context, event_name: str):
-        _wait_event(self._global, c, event_name)
-
-    def run(self):
+        Args:
+            name (str): _description_
+            args (Any): _description_
+        """
+        if trigger_name is not None:
+            _enque_trigger(self._global, trigger_name, args)
         with _lock_state(self._global):
             return self.__run()
 
@@ -168,28 +150,6 @@ class Client:
         flush_events_for_next_run_to_state(self._global)
         self._global.purge_events()
         return workflow_run_results
-
-    def euqueue_webhook(self, name: str, args: Any):
-        """
-        webhookの発生をstateにキューイングします。
-        次回のrun()で実行されます。
-
-        Args:
-            name (str): _description_
-            args (Any): _description_
-        """
-        _enque_webhook(self._global, name, args)
-
-    def euqueue_event(self, name: str, args: Any):
-        """
-        eventの発生をstateにキューイングします。
-        次回のrun()で実行されます。
-
-        Args:
-            name (str): _description_
-            args (Any): _description_
-        """
-        _enque_event(self._global, name, args)
 
 
 def setup(

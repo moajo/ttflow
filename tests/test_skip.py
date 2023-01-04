@@ -1,5 +1,5 @@
-from ttflow.core import _enque_event, _enque_webhook
-from ttflow.ttflow import Client, Context, webhook_trigger
+from ttflow import Client, RunContext
+from ttflow.core import _enque_event
 
 
 def test_中断機能が正しく動くこと(client: Client):
@@ -8,21 +8,20 @@ def test_中断機能が正しく動くこと(client: Client):
     value = []
 
     @ttflow.subeffect()
-    def subefect(context: Context, arg: int):
+    def subefect(c: RunContext, arg: int):
         value.append(arg)
 
-    @ttflow.workflow(trigger=webhook_trigger("test"))
-    def CI(context: Context, webhook_args: dict):
-        subefect(context, 1)
-        承認待ち(context)
-        subefect(context, 2)
+    @ttflow.workflow(trigger="test")
+    def CI(c: RunContext, args: dict):
+        subefect(c, 1)
+        承認待ち(c)
+        subefect(c, 2)
 
     @ttflow.subeffect()
-    def 承認待ち(context: Context):
-        ttflow.wait_event(context, "承認")
+    def 承認待ち(c: RunContext):
+        c.wait_event("承認")
 
-    _enque_webhook(client._global, "test", {"値": "hoge"})
-    results = client.run()
+    results = client.run("test", {"値": "hoge"})
 
     assert len(results) == 1
     assert results[0].workflow_name == "CI"
@@ -42,16 +41,15 @@ def test_中断機能が正しく動くこと(client: Client):
 def test_abort(client: Client):
     ttflow = client
 
-    @ttflow.workflow(trigger=webhook_trigger("test1"))
-    def wf1(context: Context, webhook_args: dict):
-        wf2(context)
+    @ttflow.workflow(trigger="test1")
+    def wf1(c: RunContext, args: dict):
+        wf2(c)
 
-    @ttflow.workflow(trigger=webhook_trigger("test2"))
-    def wf2(context: Context):
-        ttflow.log(context, "test")
+    @ttflow.workflow(trigger="test2")
+    def wf2(c: RunContext):
+        c.log("test")
 
-    _enque_webhook(client._global, "test1", {"値": "hoge"})
-    results = client.run()
+    results = client.run("test1", {"値": "hoge"})
 
     assert len(results) == 1
     assert results[0].workflow_name == "wf1"

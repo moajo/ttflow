@@ -1,7 +1,7 @@
 import functools
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from ..system_states.completed import add_completed_runs_log, add_failed_runs_log
 from ..system_states.logs import _get_logs
@@ -13,6 +13,7 @@ from ..system_states.run_state import (
 from .context import Context
 from .global_env import Global, Workflow
 from .pause import PauseException, _save_paused_workflow
+from .run_context import RunContext
 from .trigger import EventTrigger, NullTrigger, Trigger
 
 logger = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
         bool: _description_
     """
     try:
-        wf.f(c, args)
+        wf.f(RunContext(g, c), args)
     except PauseException as e:
         logger.info("ワークフローを中断します")
         _save_paused_workflow(
@@ -92,9 +93,14 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
     # TODO: そのうちワークフロー実行後イベントを実装
 
 
-def workflow(g: Global, trigger: Optional[Trigger] = None):
+def workflow(g: Global, trigger: Optional[Union[Trigger, str]] = None):
+    if trigger is None:
+        trigger = NullTrigger()
+    elif isinstance(trigger, str):
+        trigger = EventTrigger(f"_trigger_{trigger}")
+
     def _decorator(f):
-        wf = Workflow(trigger if trigger is not None else NullTrigger(), f)
+        wf = Workflow(trigger, f)
         g.workflows.append(wf)
 
         @functools.wraps(f)
@@ -110,18 +116,13 @@ def subeffect(g: Global):
     def _decorator(f):
         @functools.wraps(f)
         def _wrapper(*args, **kwargs):
-            if len(args) == 0 or not isinstance(args[0], Context):
-                raise RuntimeError("subeffectはContextを第1引数に取る必要があります")
+            if len(args) == 0 or not isinstance(args[0], RunContext):
+                raise RuntimeError("subeffectはRunContextを第1引数に取る必要があります")
             c = args[0]
-            if _is_already_executed(g, c) is not None:
+            if _is_already_executed(g, c.get_context_data()) is not None:
                 return
-            return _mark_as_executed(g, c, f(*args, **kwargs))
+            return _mark_as_executed(g, c.get_context_data(), f(*args, **kwargs))
 
         return _wrapper
 
     return _decorator
-
-
-# @ttflow.subeffectとかを作る。副作用専用の
-# runをやめて、webhookを必ずトリガーにするように一本化する
-# webhookじゃなくてhookにする
