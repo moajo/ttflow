@@ -1,1 +1,1 @@
-from hoge import *
+from hoge import *  # noqa

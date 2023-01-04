@@ -1,9 +1,6 @@
-import json 
-from pathlib import Path
-from typing import Any
-
 import hashlib
 import os
+
 
 def get_dir_hash(directory: str):
     if not os.path.exists(directory):
@@ -18,4 +15,3 @@ def get_dir_hash(directory: str):
                         break
                     hash.update(buf)
     return hash.hexdigest()
-

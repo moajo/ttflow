@@ -10,10 +10,30 @@ fire = "^0.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.2.0"
+pysen = "^0.10.2"
+isort = "^5.11.4"
+mypy = "^0.991"
+black = "^22.12.0"
+flake8 = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pysen]
+version = "0.10"
+
+[tool.pysen.lint]
+enable_black = true
+enable_flake8 = true
+enable_isort = true
+enable_mypy = false
+mypy_preset = "strict"
+line_length = 88
+py_version = "py37"
+
+[[tool.pysen.lint.mypy_targets]]
+paths = ["mlenv"]
 
 [tool.poetry.scripts]
 ttflow = "ttflow.cli:main"

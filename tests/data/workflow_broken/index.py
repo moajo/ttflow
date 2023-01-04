@@ -1,1 +1,1 @@
-pythonコードとしてとしてinvalidなパターン
+pythonコードとしてとしてinvalidなパターン  # noqa
