@@ -1,0 +1,19 @@
+# pythonのコードをlintします
+name: lint-all
+on:
+  pull_request:
+jobs:
+  pysen:
+    name: lint python code
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - uses: snok/install-poetry@v1
+        with:
+          version: 1.2.2
+      - run: echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+      - run: poetry install --no-interaction
+      - run: make lint
