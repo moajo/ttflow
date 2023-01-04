@@ -38,3 +38,12 @@ class DynamoDBStateRepository(StateRepository):
             return json.loads(response["Item"]["value"]["S"])
         else:
             return default
+
+    def lock_state(self):
+        pass
+
+    def unlock_state(self):
+        pass
+
+    def is_locked(self) -> bool:
+        return False

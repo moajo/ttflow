@@ -28,3 +28,12 @@ class LocalFileStateRepository(StateRepository):
             with open(self.state_file, "r") as f:
                 state = json.load(f)
         return state.get(name, default)
+
+    def lock_state(self):
+        pass
+
+    def unlock_state(self):
+        pass
+
+    def is_locked(self) -> bool:
+        return False

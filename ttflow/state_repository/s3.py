@@ -37,3 +37,16 @@ class S3StateRepository(StateRepository):
             return json.loads(body.decode("utf-8"))
         except client.exceptions.NoSuchKey:
             return default
+
+    def lock_state(self):
+        self.save_state("_system_lock", "locked")
+
+    def unlock_state(self):
+        client: botostubs.S3 = boto3.client("s3", region_name="us-east-1")
+        client.delete_object(
+            Bucket=self.bucket_name,
+            Key="_system_lock",
+        )
+
+    def is_locked(self) -> bool:
+        return self.read_state("_system_lock", default=None) is not None

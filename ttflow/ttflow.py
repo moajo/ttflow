@@ -57,6 +57,18 @@ def state_trigger(state_name: str) -> Trigger:
     return EventTrigger(f"state_changed_{state_name}")
 
 
+from contextlib import contextmanager
+
+
+@contextmanager
+def _lock_state(g: Global):
+    g.state.lock_state()
+    try:
+        yield
+    finally:
+        g.state.unlock_state()
+
+
 class Client:
     def __init__(self, _global: Global):
         self._global = _global
@@ -77,6 +89,10 @@ class Client:
         _wait_event(self._global, c, event_name)
 
     def run(self):
+        with _lock_state(self._global):
+            self.__run()
+
+    def __run(self):
         logger.info("check registered workflows")
 
         # デプロイイベントの対応

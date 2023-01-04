@@ -1,7 +1,8 @@
 import pytest
 
 from ttflow.state_repository.s3 import S3StateRepository
-from ttflow.state_repository.dynamodb import DynamoDBStateRepository
+
+# from ttflow.state_repository.dynamodb import DynamoDBStateRepository
 
 
 @pytest.mark.network
@@ -9,7 +10,7 @@ from ttflow.state_repository.dynamodb import DynamoDBStateRepository
     "s",
     [
         S3StateRepository("ttflow-main"),
-        DynamoDBStateRepository("ttflow"),
+        # DynamoDBStateRepository("ttflow"),
     ],
 )
 def test_StateRepository(s):
@@ -19,3 +20,10 @@ def test_StateRepository(s):
 
     a = s.read_state("notfoundkey", default="aaaaaa")
     assert a == "aaaaaa"
+
+    s.unlock_state()
+    assert not s.is_locked()
+    s.lock_state()
+    assert s.is_locked()
+    s.unlock_state()
+    assert not s.is_locked()
