@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 from ..system_states.completed import add_completed_runs_log, add_failed_runs_log
 from ..system_states.logs import _get_logs
+from ..system_states.run_state import _is_already_executed, _mark_as_executed
 from ..system_states.run_state import _delete_run_state
 from .context import Context
 from .global_env import Global, Workflow
@@ -95,7 +96,13 @@ def workflow(g: Global, trigger: Optional[Trigger] = None):
 
         @functools.wraps(f)
         def hoge_wrapper(*args, **kwargs):
-            return f(*args, **kwargs)
+            if len(args) != 0 and isinstance(args[0], Context):
+                c = args[0]
+                if _is_already_executed(g, c) is not None:
+                    return
+                return _mark_as_executed(g, c, f(*args, **kwargs))
+            else:
+                raise RuntimeError("workflowはContextを引数に取る必要があります")
 
         return hoge_wrapper
 

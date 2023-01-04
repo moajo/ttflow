@@ -30,6 +30,12 @@ def _is_already_executed(g: Global, c: Context) -> Optional[ExecutedCache]:
 def _mark_as_executed(g: Global, c: Context, value: Any):
     run_state_token = f"{c.run_id}:{c.used_count}"
     run_states = g.state.read_state(_log_key(c.run_id), default=[])
+
+    # 既に記録済みの場合は何もしない
+    tokens = [a["token"] for a in run_states]
+    if run_state_token in tokens:
+        return value
+
     run_states.append(
         {
             "token": run_state_token,
