@@ -1,5 +1,10 @@
 import fire
+import logging
+
 from ttflow import Client, Context, event_trigger, setup, state_trigger, webhook_trigger
+
+logger = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.INFO)
 
 
 def _define_workflow(ttflow: Client):
@@ -62,6 +67,13 @@ def webhook(name: str, arg: dict, state_rpository: str = "local:state.json"):
     ttflow.euqueue_webhook(name, arg)
     _define_workflow(ttflow)
     ttflow.run()
+
+
+def clear_state(state_rpository: str = "local:state.json"):
+    ttflow = setup(
+        state_repository=state_rpository,
+    )
+    ttflow._global.state.clear_state()
 
 
 def run(state_rpository: str = "local:state.json"):

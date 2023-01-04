@@ -49,13 +49,16 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> bool:
             pause_id=e.pause_id,
             args=args,
         )
+        print(f"{wf.f.__name__}: 中断します")
         return False
     except Exception as e:
         logger.error(f"ワークフローが失敗しました: {e}")
+        print(f"{wf.f.__name__}: error: {e}")
         add_failed_runs_log(g, c)
         return False
     add_completed_runs_log(g, c)
     _delete_run_state(g, c.run_id)
+    print(f"{wf.f.__name__}: 正常終了しました")
     return True
     # TODO: そのうちワークフロー実行後イベントを実装
 

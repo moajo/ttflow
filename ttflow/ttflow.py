@@ -25,8 +25,6 @@ from .system_states.event_log import _add_event_log
 from .system_states.logs import log
 from .utils import workflow_hash
 
-logging.basicConfig(level=logging.DEBUG)
-
 logger = logging.getLogger(__name__)
 
 
@@ -108,21 +106,28 @@ class Client:
                 wf = _find_workflow(self._global, pause_event.workflow_name)
                 if wf is not None:
                     logger.info(f"workflow '{wf.f.__name__}' resuming")
+                    print()
+                    print(f"{wf.f.__name__}: 中断した点から再開します")
                     exec_workflow(self._global, c, wf, args["args"])
             elif event_name.startswith("_"):
                 logger.info(f"processing system event '{event_name}'")
                 for wf in _find_event_triggered_workflows(self._global, event_name):
                     logger.info(f"'{wf.f.__name__}' triggered by event '{event_name}'")
+                    print()
+                    print(f"{wf.f.__name__}: イベント'{event_name}'により実行されます")
                     c = Context(wf.f.__name__)
                     exec_workflow(self._global, c, wf, args)
             else:
                 logger.info(f"processing event '{event_name}'")
+                print(f"イベント[{event_name}]が発生しました")
                 _add_event_log(
                     self._global,
                     event_name,
                     args,
                 )
                 for wf in _find_event_triggered_workflows(self._global, event_name):
+                    print()
+                    print(f"{wf.f.__name__}: イベント[{event_name}]により実行されます")
                     logger.info(
                         f"run workflow '{wf.f.__name__}' triggered by event '{event_name}'"
                     )
@@ -170,6 +175,16 @@ def setup(
         s = DynamoDBStateRepository(
             table_name=state_repository[len("dynamodb:") :],
         )
+    elif state_repository.startswith("s3:"):
+        from .state_repository.s3 import S3StateRepository
+
+        s = S3StateRepository(
+            bucket_name=state_repository[len("s3:") :],
+        )
+    elif state_repository.startswith("onmemory"):
+        from .state_repository.on_memory_state import OnMemoryStateRepository
+
+        s = OnMemoryStateRepository()
     else:
         raise Exception("Unknown repository: ", state_repository)
 

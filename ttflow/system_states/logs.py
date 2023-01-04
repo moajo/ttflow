@@ -13,7 +13,7 @@ def _log_key(run_id):
 def log(g: Global, c: Context, message: str):
     if _is_already_executed(g, c) is not None:
         return
-    txt = f"[ワークフローのログ]{message}"
+    txt = f"    [{c.workflow_name}]{message}"
     print(txt)
     logs = g.state.read_state(_log_key(c.run_id), default=[])
     logs.append(txt)

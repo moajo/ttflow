@@ -56,8 +56,8 @@ def test_中断機能が正しく動くこと(client: Client):
     assert s.read_state("CD完了回数") is None
     run_id = paused_event[0].args["run_id"]
     assert _get_logs(client._global, run_id) == [
-        "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
-        f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
+        "    [CI]通知ダミー: 0回目のCDを開始します: hoge",
+        f"    [CI]通知ダミー: 承認事項がが1件あります:{run_id}",
     ]
 
     current = json.loads(
@@ -74,8 +74,8 @@ def test_中断機能が正しく動くこと(client: Client):
     new_state["_events"] = []  # paused eventは更新されるので無視する
     assert new_state == current, "stateが変化していないこと"
     assert _get_logs(client._global, run_id) == [
-        "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
-        f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
+        "    [CI]通知ダミー: 0回目のCDを開始します: hoge",
+        f"    [CI]通知ダミー: 承認事項がが1件あります:{run_id}",
     ]
 
     # 承認する
@@ -85,10 +85,10 @@ def test_中断機能が正しく動くこと(client: Client):
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") == 1
     assert _get_logs(client._global, run_id) == [
-        "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
-        f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
-        "[ワークフローのログ]承認されました",
-        "[ワークフローのログ]通知ダミー: CD完了",
+        "    [CI]通知ダミー: 0回目のCDを開始します: hoge",
+        f"    [CI]通知ダミー: 承認事項がが1件あります:{run_id}",
+        "    [CI]承認されました",
+        "    [CI]通知ダミー: CD完了",
     ]
 
 
@@ -117,10 +117,10 @@ def test_中断イベントは永続化される():
     assert client._global.state.read_state("CD開始回数") == 1
     assert client._global.state.read_state("CD完了回数") == 1
     assert _get_logs(client._global, run_id) == [
-        "[ワークフローのログ]通知ダミー: 0回目のCDを開始します: hoge",
-        f"[ワークフローのログ]通知ダミー: 承認事項がが1件あります:{run_id}",
-        "[ワークフローのログ]承認されました",
-        "[ワークフローのログ]通知ダミー: CD完了",
+        "    [CI]通知ダミー: 0回目のCDを開始します: hoge",
+        f"    [CI]通知ダミー: 承認事項がが1件あります:{run_id}",
+        "    [CI]承認されました",
+        "    [CI]通知ダミー: CD完了",
     ]
 
 
