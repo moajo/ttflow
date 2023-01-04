@@ -1,0 +1,19 @@
+{
+  "event_log": [
+    {
+      "args": {
+        "new": true,
+        "old": null
+      },
+      "event_name": "state_changed_workflow_loaded_successfull",
+      "timestamp": 1672769990.535412
+    },
+    {
+      "args": null,
+      "event_name": "workflows_changed",
+      "timestamp": 1672769990.5355551
+    }
+  ],
+  "workflow_loaded_successfull": true,
+  "workflows_hash": "39847d390c8dfbf17ea5d57d2bd47b9298ce4c6c"
+}
