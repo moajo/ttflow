@@ -1,8 +1,10 @@
 import functools
 import logging
+from dataclasses import dataclass
 from typing import Any, Optional
 
 from ..system_states.completed import add_completed_runs_log, add_failed_runs_log
+from ..system_states.logs import _get_logs
 from ..system_states.run_state import _delete_run_state
 from .context import Context
 from .global_env import Global, Workflow
@@ -25,7 +27,15 @@ def _find_event_triggered_workflows(g: Global, event_name: str):
             yield wf
 
 
-def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> bool:
+@dataclass
+class WorkflowRunResult:
+    workflow_name: str
+    run_id: str
+    status: str  # succeeded, failed, paused
+    logs: list[str]
+
+
+def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRunResult:
     """workflowを実行する
     中断する場合、paused_workflowsステートにその状態を保存する
     完了したらcompleted_runs_logステートに記録する
@@ -50,16 +60,31 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> bool:
             args=args,
         )
         print(f"{wf.f.__name__}: 中断します")
-        return False
+        return WorkflowRunResult(
+            workflow_name=wf.f.__name__,
+            run_id=c.run_id,
+            status="paused",
+            logs=_get_logs(g, c.run_id),
+        )
     except Exception as e:
         logger.error(f"ワークフローが失敗しました: {e}")
         print(f"{wf.f.__name__}: error: {e}")
         add_failed_runs_log(g, c)
-        return False
+        return WorkflowRunResult(
+            workflow_name=wf.f.__name__,
+            run_id=c.run_id,
+            status="failed",
+            logs=_get_logs(g, c.run_id),
+        )
     add_completed_runs_log(g, c)
     _delete_run_state(g, c.run_id)
     print(f"{wf.f.__name__}: 正常終了しました")
-    return True
+    return WorkflowRunResult(
+        workflow_name=wf.f.__name__,
+        run_id=c.run_id,
+        status="succeeded",
+        logs=_get_logs(g, c.run_id),
+    )
     # TODO: そのうちワークフロー実行後イベントを実装
 
 

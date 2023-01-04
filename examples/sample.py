@@ -1,6 +1,6 @@
-import fire
 import logging
 
+import fire
 from ttflow import Client, Context, event_trigger, setup, state_trigger, webhook_trigger
 
 logger = logging.getLogger(__name__)

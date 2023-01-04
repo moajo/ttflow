@@ -1,4 +1,5 @@
 import logging
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Optional
 
@@ -16,6 +17,7 @@ from .core.state import get_state, set_state
 from .core.system_events.pause import try_parse_pause_event
 from .core.trigger import EventTrigger, Trigger
 from .core.workflow import (
+    WorkflowRunResult,
     _find_event_triggered_workflows,
     _find_workflow,
     exec_workflow,
@@ -57,9 +59,6 @@ def state_trigger(state_name: str) -> Trigger:
     return EventTrigger(f"state_changed_{state_name}")
 
 
-from contextlib import contextmanager
-
-
 @contextmanager
 def _lock_state(g: Global):
     if g.state.is_locked():
@@ -93,9 +92,9 @@ class Client:
 
     def run(self):
         with _lock_state(self._global):
-            self.__run()
+            return self.__run()
 
-    def __run(self):
+    def __run(self) -> list[WorkflowRunResult]:
         logger.info("check registered workflows")
 
         # デプロイイベントの対応
@@ -112,6 +111,7 @@ class Client:
         load_events_from_state(self._global)
 
         logger.info("start event loop")
+        workflow_run_results: list[WorkflowRunResult] = []
         for e in iterate_events(self._global):
             event_name = e.event_name
             args = e.args
@@ -127,7 +127,9 @@ class Client:
                     logger.info(f"workflow '{wf.f.__name__}' resuming")
                     print()
                     print(f"{wf.f.__name__}: 中断した点から再開します")
-                    exec_workflow(self._global, c, wf, args["args"])
+                    workflow_run_results.append(
+                        exec_workflow(self._global, c, wf, args["args"])
+                    )
             elif event_name.startswith("_"):
                 logger.info(f"processing system event '{event_name}'")
                 for wf in _find_event_triggered_workflows(self._global, event_name):
@@ -135,7 +137,9 @@ class Client:
                     print()
                     print(f"{wf.f.__name__}: イベント'{event_name}'により実行されます")
                     c = Context(wf.f.__name__)
-                    exec_workflow(self._global, c, wf, args)
+                    workflow_run_results.append(
+                        exec_workflow(self._global, c, wf, args)
+                    )
             else:
                 logger.info(f"processing event '{event_name}'")
                 print(f"イベント[{event_name}]が発生しました")
@@ -151,12 +155,15 @@ class Client:
                         f"run workflow '{wf.f.__name__}' triggered by event '{event_name}'"
                     )
                     c = Context(wf.f.__name__)
-                    exec_workflow(self._global, c, wf, args)
+                    workflow_run_results.append(
+                        exec_workflow(self._global, c, wf, args)
+                    )
 
         logger.info("do post processes")
         # eventを永続化してメモリ上から消す
         flush_events_for_next_run_to_state(self._global)
         self._global.purge_events()
+        return workflow_run_results
 
     def euqueue_webhook(self, name: str, args: Any):
         """

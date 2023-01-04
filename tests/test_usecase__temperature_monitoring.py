@@ -115,7 +115,7 @@ def test_温度監視ユースケースの処理__温度状態の読み書きが
     # stateが変化し、温度状態も変化
     _enque_webhook(client._global, "温度変化", {"温度": 21})
     client.run()
-    run_id = _get_completed_runs_log(client._global)[-1]["run_id"]
+    _get_completed_runs_log(client._global)[-1]["run_id"]
     event_log.extend(
         [
             "state_changed_温度",

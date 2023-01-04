@@ -48,7 +48,16 @@ def test_中断機能が正しく動くこと(client: Client):
     assert s.read_state("CD完了回数") is None
 
     _enque_webhook(client._global, "デプロイCD", {"値": "hoge"})
-    client.run()
+    results = client.run()
+    assert len(results) == 1
+    assert results[0].workflow_name == "CI"
+    assert results[0].status == "paused"
+    assert len(results[0].logs) == 2
+    assert results[0].logs == [
+        "通知ダミー: 0回目のCDを開始します: hoge",
+        f"通知ダミー: 承認事項がが1件あります:{results[0].run_id}",
+    ]
+
     paused_event = _read_events_from_state(client._global)
     assert len(client._global.events_for_next_run) == 0, "commitされてるので0"
     assert len(paused_event) == 1
@@ -56,15 +65,23 @@ def test_中断機能が正しく動くこと(client: Client):
     assert s.read_state("CD完了回数") is None
     run_id = paused_event[0].args["run_id"]
     assert _get_logs(client._global, run_id) == [
-        "    [CI]通知ダミー: 0回目のCDを開始します: hoge",
-        f"    [CI]通知ダミー: 承認事項がが1件あります:{run_id}",
+        "通知ダミー: 0回目のCDを開始します: hoge",
+        f"通知ダミー: 承認事項がが1件あります:{run_id}",
     ]
 
     current = json.loads(
         json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False)
     )
     current["_events"] = []  # paused eventは更新されるので無視する
-    client.run()
+    results = client.run()
+    assert len(results) == 1
+    assert results[0].workflow_name == "CI"
+    assert results[0].status == "paused"
+    assert len(results[0].logs) == 2
+    assert results[0].logs == [
+        "通知ダミー: 0回目のCDを開始します: hoge",
+        f"通知ダミー: 承認事項がが1件あります:{results[0].run_id}",
+    ]
     paused_event = _read_events_from_state(client._global)
     assert len(client._global.events_for_next_run) == 0, "commitされてるので0"
     assert len(paused_event) == 1
@@ -74,21 +91,32 @@ def test_中断機能が正しく動くこと(client: Client):
     new_state["_events"] = []  # paused eventは更新されるので無視する
     assert new_state == current, "stateが変化していないこと"
     assert _get_logs(client._global, run_id) == [
-        "    [CI]通知ダミー: 0回目のCDを開始します: hoge",
-        f"    [CI]通知ダミー: 承認事項がが1件あります:{run_id}",
+        "通知ダミー: 0回目のCDを開始します: hoge",
+        f"通知ダミー: 承認事項がが1件あります:{run_id}",
     ]
 
     # 承認する
     _enque_event(client._global, f"承認:{run_id}", None)
-    client.run()
+    results = client.run()
+    assert len(results) == 1
+    assert results[0].workflow_name == "CI"
+    assert results[0].status == "succeeded"
+    assert len(results[0].logs) == 4
+    assert results[0].logs == [
+        "通知ダミー: 0回目のCDを開始します: hoge",
+        f"通知ダミー: 承認事項がが1件あります:{results[0].run_id}",
+        "承認されました",
+        "通知ダミー: CD完了",
+    ]
+
     assert len(s.read_state("paused_workflows", default=[])) == 0
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") == 1
     assert _get_logs(client._global, run_id) == [
-        "    [CI]通知ダミー: 0回目のCDを開始します: hoge",
-        f"    [CI]通知ダミー: 承認事項がが1件あります:{run_id}",
-        "    [CI]承認されました",
-        "    [CI]通知ダミー: CD完了",
+        "通知ダミー: 0回目のCDを開始します: hoge",
+        f"通知ダミー: 承認事項がが1件あります:{run_id}",
+        "承認されました",
+        "通知ダミー: CD完了",
     ]
 
 
@@ -117,10 +145,10 @@ def test_中断イベントは永続化される():
     assert client._global.state.read_state("CD開始回数") == 1
     assert client._global.state.read_state("CD完了回数") == 1
     assert _get_logs(client._global, run_id) == [
-        "    [CI]通知ダミー: 0回目のCDを開始します: hoge",
-        f"    [CI]通知ダミー: 承認事項がが1件あります:{run_id}",
-        "    [CI]承認されました",
-        "    [CI]通知ダミー: CD完了",
+        "通知ダミー: 0回目のCDを開始します: hoge",
+        f"通知ダミー: 承認事項がが1件あります:{run_id}",
+        "承認されました",
+        "通知ダミー: CD完了",
     ]
 
 

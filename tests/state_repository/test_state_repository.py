@@ -1,5 +1,4 @@
 import pytest
-
 from ttflow.state_repository.s3 import S3StateRepository
 
 # from ttflow.state_repository.dynamodb import DynamoDBStateRepository

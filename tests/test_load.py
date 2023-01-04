@@ -7,6 +7,7 @@ def _define_workflow_for_test(client: Client):
     # 外部から温度変化を受信する
     @client.workflow(trigger=event_trigger("workflows_changed"))
     def ワークフローのデプロイイベント(context: Context, webhook_args: dict):
+        client.log(context, "デプロイイベントを受信しました")
         c = client.get_state(context, "デプロイ回数")
         if c is None:
             c = 0
@@ -18,7 +19,13 @@ def test_正常系(client: Client):
 
     assert len(client._global.workflows) == 1
 
-    client.run()
+    results = client.run()
+
+    assert len(results) == 1
+    assert results[0].workflow_name == "ワークフローのデプロイイベント"
+    assert results[0].status == "succeeded"
+    assert len(results[0].logs) == 1
+    assert results[0].logs[0] == "デプロイイベントを受信しました"
 
     assert [a["event_name"] for a in _get_event_logs(client._global)] == [
         "workflows_changed",  # 初回なので発行される
