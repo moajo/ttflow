@@ -8,28 +8,29 @@ from .base import StateRepository
 
 
 class S3StateRepository(StateRepository):
-    def __init__(self, bucket_name: str):
+    def __init__(self, bucket_name: str, prefix: str):
         self.bucket_name = bucket_name
+        self.prefix = prefix
 
     def save_state(self, name: str, value):
         client: botostubs.S3 = boto3.client("s3", region_name="us-east-1")
         client.put_object(
             Bucket=self.bucket_name,
-            Key=name,
+            Key=f"{self.prefix}/{name}",
             Body=json.dumps(value).encode("utf-8"),
         )
 
     def clear_state(self):
         s3 = boto3.resource("s3")
         bucket = s3.Bucket(self.bucket_name)
-        bucket.objects.all().delete()
+        bucket.objects.filter(Prefix=f"{self.prefix}/").delete()
 
     def read_state(self, name: str, default=None) -> Any:
         client: botostubs.S3 = boto3.client("s3", region_name="us-east-1")
         try:
             response = client.get_object(
                 Bucket=self.bucket_name,
-                Key=name,
+                Key=f"{self.prefix}/{name}",
             )
             if "Body" not in response:
                 return default
@@ -45,8 +46,8 @@ class S3StateRepository(StateRepository):
         client: botostubs.S3 = boto3.client("s3", region_name="us-east-1")
         client.delete_object(
             Bucket=self.bucket_name,
-            Key="_system_lock",
-        )
+            Key=f"{self.prefix}/_system_lock",
+        ),
 
     def is_locked(self) -> bool:
         return self.read_state("_system_lock", default=None) is not None

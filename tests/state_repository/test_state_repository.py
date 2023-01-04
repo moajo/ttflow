@@ -9,7 +9,7 @@ from ttflow.state_repository.s3 import S3StateRepository
 @pytest.mark.parametrize(
     "s",
     [
-        S3StateRepository("ttflow-main"),
+        S3StateRepository("ttflow-main", prefix="test"),
         # DynamoDBStateRepository("ttflow"),
     ],
 )

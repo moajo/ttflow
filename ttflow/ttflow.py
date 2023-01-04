@@ -197,8 +197,16 @@ def setup(
     elif state_repository.startswith("s3:"):
         from .state_repository.s3 import S3StateRepository
 
+        s3_path = state_repository[len("s3:") :]
+        if "/" not in s3_path:
+            bucket = s3_path
+            prefix = ""
+        else:
+            bucket, prefix = s3_path.split("/", maxsplit=1)
+
         s = S3StateRepository(
-            bucket_name=state_repository[len("s3:") :],
+            bucket_name=bucket,
+            prefix=prefix,
         )
     elif state_repository.startswith("onmemory"):
         from .state_repository.on_memory_state import OnMemoryStateRepository
