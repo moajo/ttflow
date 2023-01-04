@@ -7,7 +7,6 @@ from .global_env import Global
 
 # ステートを書き込む。再実行時は何もしない
 def set_state(g: Global, c: Context, state_name: str, value):
-    # s = _global.state
     c._use()
     set_state_id = f"{c.run_id}:{c.used_count}"
     set_state_cache = g.state.read_state("_set_state_cache", default={})

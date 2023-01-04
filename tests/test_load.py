@@ -1,17 +1,20 @@
 from ttflow.system_states.completed import _get_completed_runs_log
-from ttflow.ttflow import Client, Context
+from ttflow.ttflow import Client, Context, event_trigger
 
 
-def test_正常系(client: Client):
-
+def _define_workflow_for_test(client: Client):
     # 外部から温度変化を受信する
-    @client.workflow(trigger=client.event("workflows_changed"))
+    @client.workflow(trigger=event_trigger("workflows_changed"))
     def ワークフローのデプロイイベント(context: Context, webhook_args: dict):
         print("ワークフローのデプロイイベントが発生しました")
         c = client.get_state(context, "デプロイ回数")
         if c is None:
             c = 0
         client.set_state(context, "デプロイ回数", c + 1)
+
+
+def test_正常系(client: Client):
+    _define_workflow_for_test(client)
 
     assert len(client._global.registerer.workflows) == 1
 
@@ -30,15 +33,7 @@ def test_正常系(client: Client):
 
 
 def test_正常系2(client: Client):
-
-    # 外部から温度変化を受信する
-    @client.workflow(trigger=client.event("workflows_changed"))
-    def ワークフローのデプロイイベント(context: Context, webhook_args: dict):
-        print("ワークフローのデプロイイベントが発生しました")
-        c = client.get_state(context, "デプロイ回数")
-        if c is None:
-            c = 0
-        client.set_state(context, "デプロイ回数", c + 1)
+    _define_workflow_for_test(client)
 
     assert len(client._global.registerer.workflows) == 1
 

@@ -1,9 +1,9 @@
-from ttflow.ttflow import Client, Context
+from ttflow.ttflow import Client, Context, event_trigger
 
 
 def _define_workflow_for_test(client: Client):
     # 外部から温度変化を受信する
-    @client.workflow(trigger=client.event("workflows_changed"))
+    @client.workflow(trigger=event_trigger("workflows_changed"))
     def ワークフローのデプロイイベント(context: Context, webhook_args: dict):
         print("ワークフローのデプロイイベントが発生しました")
         c = client.get_state(context, "デプロイ回数")
@@ -32,7 +32,7 @@ def test_ワークフローハッシュが計算されること(client: Client):
     ), "workflows_changedが発行されていること"
 
     h = s.read_state("workflows_hash")
-    client.do_ttflow()
+    client.run()
     assert s.read_state("workflows_hash") == h
     assert (
         len(

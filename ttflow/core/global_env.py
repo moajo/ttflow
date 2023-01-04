@@ -1,5 +1,4 @@
 from ..state_repository.base import StateRepository
-from ..state_repository.local_file_state import LocalFileStateRepository
 
 
 class Registerer:
@@ -11,9 +10,9 @@ class Registerer:
 
 
 class Global:
-    def __init__(self):
+    def __init__(self, state: StateRepository):
+        self.state = state
         self.registerer = Registerer()
-        self.state: StateRepository = LocalFileStateRepository()
 
         # イベントキュー
         self.events = []

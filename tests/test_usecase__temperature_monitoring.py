@@ -1,20 +1,20 @@
 import pytest
 from ttflow.core import _enque_webhook
 from ttflow.system_states.completed import _get_completed_runs_log
-from ttflow.ttflow import Client, Context
+from ttflow.ttflow import Client, Context, webhook_trigger, state_trigger
 
 
 def _define_workflow_for_test(client: Client):
     ttflow = client
 
     # 外部から温度変化を受信する
-    @ttflow.workflow(trigger=ttflow.webhook("温度変化"))
+    @ttflow.workflow(trigger=webhook_trigger("温度変化"))
     def 温度変化受信(context: Context, webhook_args: dict):
         ttflow.set_state(context, "温度", webhook_args["温度"])
 
     # 15度未満で赤、20度以上で緑
     # 14->16->14となっても連続でアラートは発行しない
-    @ttflow.workflow(trigger=ttflow.state("温度"))
+    @ttflow.workflow(trigger=state_trigger("温度"))
     def 温度変化(context: Context, data: dict):
         t = data["new"]
         state = ttflow.get_state(context, "温度状態")

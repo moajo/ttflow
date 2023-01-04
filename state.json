@@ -1,19 +1,98 @@
 {
+  "_get_state_cache": {
+    "609765696:1": null,
+    "609765696:3": [],
+    "933234167:1": 1,
+    "933234167:3": [
+      {
+        "run_id": 609765696
+      }
+    ]
+  },
+  "_set_state_cache": {
+    "609765696:2": 1,
+    "609765696:4": [
+      {
+        "run_id": 609765696
+      }
+    ],
+    "933234167:2": 2,
+    "933234167:4": [
+      {
+        "run_id": 609765696
+      },
+      {
+        "run_id": 933234167
+      }
+    ]
+  },
+  "completed": [
+    {
+      "run_id": 609765696
+    },
+    {
+      "run_id": 933234167
+    }
+  ],
   "event_log": [
     {
+      "args": null,
+      "event_name": "workflows_changed",
+      "timestamp": 1672810202.666089
+    },
+    {
       "args": {
-        "new": true,
+        "new": 1,
         "old": null
       },
-      "event_name": "state_changed_workflow_loaded_successfull",
-      "timestamp": 1672769990.535412
+      "event_name": "state_changed_デプロイ回数",
+      "timestamp": 1672810202.667136
+    },
+    {
+      "args": {
+        "new": [
+          {
+            "run_id": 609765696
+          }
+        ],
+        "old": null
+      },
+      "event_name": "state_changed_completed",
+      "timestamp": 1672810202.6672761
     },
     {
       "args": null,
       "event_name": "workflows_changed",
-      "timestamp": 1672769990.5355551
+      "timestamp": 1672811026.381006
+    },
+    {
+      "args": {
+        "new": 2,
+        "old": 1
+      },
+      "event_name": "state_changed_デプロイ回数",
+      "timestamp": 1672811026.383502
+    },
+    {
+      "args": {
+        "new": [
+          {
+            "run_id": 609765696
+          },
+          {
+            "run_id": 933234167
+          }
+        ],
+        "old": [
+          {
+            "run_id": 609765696
+          }
+        ]
+      },
+      "event_name": "state_changed_completed",
+      "timestamp": 1672811026.3836842
     }
   ],
-  "workflow_loaded_successfull": true,
-  "workflows_hash": "5192233f92a9495b8db2da265937f2d28b29fa3e"
+  "workflows_hash": "fb5f44d4df37bec4e8fde5ca0f0df85ce4d014c4",
+  "デプロイ回数": 2
 }

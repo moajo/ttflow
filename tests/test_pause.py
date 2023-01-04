@@ -3,11 +3,11 @@ import json
 from ttflow.core import _enque_event, _enque_webhook
 from ttflow.state_repository.on_memory_state import OnMemoryStateRepository
 from ttflow.system_states.logs import _get_logs
-from ttflow.ttflow import Client, Context
+from ttflow.ttflow import Client, Context, webhook_trigger
 
 
 def _define_workflow_for_test(ttflow: Client):
-    @ttflow.workflow(trigger=ttflow.webhook("デプロイCD"))
+    @ttflow.workflow(trigger=webhook_trigger("デプロイCD"))
     def CI(context: Context, webhook_args: dict):
         c = ttflow.get_state(context, "CD開始回数")
         if c is None:
@@ -45,7 +45,7 @@ def test_中断機能が正しく動くこと(client: Client):
     assert s.read_state("CD完了回数") is None
 
     _enque_webhook(client._global, "デプロイCD", {"値": "hoge"})
-    client.do_ttflow()
+    client.run()
     assert len(s.read_state("paused_workflows", default=[])) == 1
     assert s.read_state("paused_workflows", default=[])[0]["workflow_name"] == "CI"
     run_id = s.read_state("paused_workflows", default=[])[0]["run_id"]
@@ -59,7 +59,7 @@ def test_中断機能が正しく動くこと(client: Client):
     ]
 
     current = json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False)
-    client.do_ttflow()
+    client.run()
     assert (
         json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False) == current
     ), "stateが変化していないこと"
@@ -70,7 +70,7 @@ def test_中断機能が正しく動くこと(client: Client):
 
     # 承認する
     _enque_event(client._global, f"承認:{run_id}", None)
-    client.do_ttflow()
+    client.run()
     assert len(s.read_state("paused_workflows", default=[])) == 0
     assert s.read_state("CD開始回数") == 1
     assert s.read_state("CD完了回数") == 1

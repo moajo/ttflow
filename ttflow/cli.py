@@ -1,8 +1,5 @@
 import fire
 
-# from .ttflow import do_ttflow
-
-
 # # python cli.py reset_state
 # def reset_state():
 #     s = LocalFileStateRepository()
@@ -25,7 +22,7 @@ import fire
 
 
 # python cli.py event "ほげ"
-def run():
+def run(state_rpository: str):
     pass
     # if load_workflows(Path("workflows")):
     #     do_ttflow()
