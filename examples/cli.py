@@ -19,4 +19,4 @@ def 処理2(c: RunContext, args: int):
     c.log(f"処理2も実行します: {args}")
 
 
-run_by_cli(ttflow)
+run_by_cli(ttflow, enabled_dangerous_clear_state_command=True)

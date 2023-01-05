@@ -1,7 +1,10 @@
 from ttflow import RunContext, setup
 from ttflow.powerup.run_by_cli import run_by_cli
 
-# TRY: `python examples/cli.py run 処理1`
+# TRY:
+# python examples/infinite_loop.py run loop
+# python examples/infinite_loop.py run
+# ...(10 times)...
 
 ttflow = setup(
     state_repository="local:states/cli_infinite_loop.json",
@@ -20,4 +23,4 @@ def loop(c: RunContext, args: dict):
             break
 
 
-run_by_cli(ttflow)
+run_by_cli(ttflow, enabled_dangerous_clear_state_command=True)
