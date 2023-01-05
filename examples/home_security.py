@@ -1,4 +1,4 @@
-from ttflow import RunContext, setup, state_trigger
+from ttflow import RunContext, setup
 from ttflow.powerup.run_by_cli import run_by_cli
 
 # ユースケース例

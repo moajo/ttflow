@@ -1,5 +1,3 @@
-from typing import Any
-
 from ..system_states.event_log import _get_event_logs
 from ..system_states.run_state import _is_already_executed, _mark_as_executed
 from .context import Context

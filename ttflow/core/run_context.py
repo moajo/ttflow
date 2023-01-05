@@ -5,7 +5,7 @@ from .context import Context
 from .event import _enque_event
 from .global_env import Global
 from .pause import _pause_once, _wait_event
-from .state import get_state, set_state, add_list_state
+from .state import add_list_state, get_state, set_state
 
 
 class RunContext:

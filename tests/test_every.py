@@ -1,5 +1,4 @@
 from ttflow import Client, RunContext, every_trigger
-from ttflow.core import _enque_event
 
 
 def test_everyイベントの挙動テスト(client: Client):
@@ -7,7 +6,7 @@ def test_everyイベントの挙動テスト(client: Client):
 
     @ttflow.workflow(trigger=every_trigger())
     def main(c: RunContext, arg: int):
-        c.log(f"hoge")
+        c.log("hoge")
 
     results = client.run()
 

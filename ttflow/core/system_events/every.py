@@ -1,6 +1,5 @@
-from typing import Any, Optional
-from dataclasses import asdict, dataclass
-
+from dataclasses import dataclass
+from typing import Optional
 
 from ..event import Event, _enque_event
 from ..global_env import Global
