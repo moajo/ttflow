@@ -1,6 +1,6 @@
 from typing import Any
 
-from ..system_states.run_state import _is_already_executed, _mark_as_executed
+from ..system_states.run_state import _execute_once
 from .context import Context
 from .event import _enque_event
 from .global_env import Global
@@ -8,10 +8,11 @@ from .global_env import Global
 
 # ステートを書き込む。再実行時は何もしない
 def set_state(g: Global, c: Context, state_name: str, value):
-    if _is_already_executed(g, c) is not None:
-        return
-    write_state_with_changed_event(g, state_name, value)
-    _mark_as_executed(g, c, None)
+    @_execute_once(g, c)
+    def a():
+        write_state_with_changed_event(g, state_name, value)
+
+    return a()
 
 
 # ステートを書き込み、変更があったら差分イベントを発行する
@@ -38,9 +39,9 @@ def get_state(g: Global, c: Context, state_name: str, default: Any = None):
     Returns:
         _type_: _description_
     """
-    cache = _is_already_executed(g, c)
-    if cache is not None:
-        return cache.value
 
-    value = g.state.read_state(state_name, default=default)
-    return _mark_as_executed(g, c, value)
+    @_execute_once(g, c)
+    def a():
+        return g.state.read_state(state_name, default=default)
+
+    return a()

@@ -5,11 +5,7 @@ from typing import Any, Optional, Union
 
 from ..system_states.completed import add_completed_runs_log, add_failed_runs_log
 from ..system_states.logs import _get_logs
-from ..system_states.run_state import (
-    _delete_run_state,
-    _is_already_executed,
-    _mark_as_executed,
-)
+from ..system_states.run_state import _delete_run_state, _execute_once
 from .context import Context
 from .global_env import Global, Workflow
 from .pause import PauseException, _save_paused_workflow
@@ -125,9 +121,12 @@ def sideeffect(g: Global):
             if len(args) == 0 or not isinstance(args[0], RunContext):
                 raise RuntimeError("sideeffectはRunContextを第1引数に取る必要があります")
             c = args[0]
-            if _is_already_executed(g, c.get_context_data()) is not None:
-                return
-            return _mark_as_executed(g, c.get_context_data(), f(*args, **kwargs))
+
+            @_execute_once(g, c.get_context_data())
+            def a():
+                return f(*args, **kwargs)
+
+            return a()
 
         return _wrapper
 

@@ -22,3 +22,6 @@ class Context:
 
     def _use(self):
         self.used_count += 1
+
+    def get_run_state_token(self):
+        return f"{self.run_id}:{self.used_count}"

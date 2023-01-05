@@ -17,11 +17,11 @@ def _event_name():
 
 @dataclass
 class PauseEvent:
-    workflow_name: str
-    run_id: Any
-    pause_id: str
-    args: Any
-    timestamp: float
+    workflow_name: str  # 実行してるワークフロー名
+    run_id: str  # run_id
+    pause_id: str  # 中断のID
+    args: Any  # 実行時の引数
+    timestamp: float  # 中断時刻
 
 
 def _enque_pause_event(

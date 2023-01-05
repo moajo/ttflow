@@ -1,6 +1,7 @@
 from typing import Any
 
 from ..system_states.event_log import _get_event_logs
+from ..system_states.run_state import _is_already_executed, _mark_as_executed
 from .context import Context
 from .global_env import Global
 from .system_events.pause import _enque_pause_event
@@ -20,7 +21,7 @@ class PauseException(Exception):
 def _save_paused_workflow(
     g: Global,
     workflow_name: str,
-    run_id: Any,
+    run_id: str,
     pause_id: str,
     args: Any,
 ):
@@ -44,3 +45,23 @@ def _wait_event(g: Global, c: Context, event_name: str):
     ]
     if len(target_events) == 0:
         raise PauseException(pause_id)
+
+
+def _pause_once(g: Global, c: Context):
+    """一度だけ中断します。次回無条件で再開します"""
+    cache = _is_already_executed(g, c)
+    if cache is not None:
+        return cache.value
+    token = c.get_run_state_token()  # fを実行する前に計算しておく必要がある。変わってしまうので
+    _mark_as_executed(g, c, token, None)
+    raise PauseException(c.get_run_state_token())
+
+    # @_execute_once(g, c)
+    # def a():
+    #     pause_id = f"{c.run_id}:{c.used_count}"
+
+    #     # 初回なので中断情報を保存する
+    #     if c.paused_info is None:
+    #         raise PauseException(pause_id)
+
+    # return a()
