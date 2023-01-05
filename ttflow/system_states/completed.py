@@ -2,7 +2,7 @@ import time
 
 from ..core.context import Context
 from ..core.global_env import Global
-from ..core.state import get_state
+from ..core.state import get_state, _add_list_state_raw
 
 # 完了したrunのログを保持する
 
@@ -38,11 +38,7 @@ def add_failed_runs_log(g: Global, c: Context):
 
 
 def _add_runs_log(g: Global, c: Context, data: dict):
-    logs = get_state(g, c, _log_key(), [])
-    logs.append(data)
-    # 最新1000件のみ保持
-    logs = logs[-1000:]
-    g.state.save_state(_log_key(), logs)
+    _add_list_state_raw(g, _log_key(), data, max_length=1000)
 
 
 def get_completed_runs_log(g: Global, c: Context):

@@ -5,7 +5,7 @@ from .context import Context
 from .event import _enque_event
 from .global_env import Global
 from .pause import _pause_once, _wait_event
-from .state import get_state, set_state
+from .state import get_state, set_state, add_list_state
 
 
 class RunContext:
@@ -20,7 +20,10 @@ class RunContext:
         return get_state(self._global, self._context, state_name, default)
 
     def set_state(self, state_name: str, value):
-        set_state(self._global, self._context, state_name, value)
+        return set_state(self._global, self._context, state_name, value)
+
+    def add_list_state(self, state_name: str, value):
+        return add_list_state(self._global, self._context, state_name, value)
 
     def log(self, message: str):
         return log(self._global, self._context, message)

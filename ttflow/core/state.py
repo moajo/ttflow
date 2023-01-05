@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from ..system_states.run_state import _execute_once
 from .context import Context
@@ -41,3 +41,34 @@ def get_state(g: Global, c: Context, state_name: str, default: Any = None):
         return g.state.read_state(state_name, default=default)
 
     return a()
+
+
+def add_list_state(
+    g: Global,
+    c: Context,
+    state_name: str,
+    value,
+    max_length: Optional[int] = None,
+):
+    values = get_state(g, c, state_name, [])
+    if values is not list:
+        raise Exception(f"state {state_name} is not list")
+    values.append(value)
+    if max_length is not None:
+        values = values[-max_length:]
+    set_state(g, c, state_name, values)
+
+
+def _add_list_state_raw(
+    g: Global,
+    state_name: str,
+    value,
+    max_length: Optional[int] = None,
+):
+    values = g.state.read_state(state_name, [])
+    if type(values) != list:
+        raise Exception(f"state {state_name} is not list")
+    values.append(value)
+    if max_length is not None:
+        values = values[-max_length:]
+    g.state.save_state(state_name, values)
