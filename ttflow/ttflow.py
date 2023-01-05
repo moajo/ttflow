@@ -19,9 +19,10 @@ from .core.workflow import (
     _find_event_triggered_workflows,
     _find_workflow,
     exec_workflow,
-    subeffect,
+    sideeffect,
     workflow,
 )
+from .state_repository.buffer_cache_proxy import BufferCacheStateRepositoryProxy
 from .system_states.event_log import _add_event_log
 from .utils import workflow_hash
 
@@ -64,8 +65,8 @@ class Client:
     def workflow(self, trigger: Optional[Union[Trigger, str]] = None):
         return workflow(self._global, trigger)
 
-    def subeffect(self):
-        return subeffect(self._global)
+    def sideeffect(self):
+        return sideeffect(self._global)
 
     def run(self, trigger_name: Optional[str] = None, args: Any = None):
         """
@@ -78,7 +79,8 @@ class Client:
         if trigger_name is not None:
             _enque_trigger(self._global, trigger_name, args)
         with _lock_state(self._global):
-            return self.__run()
+            with self._global.state.buffering():
+                return self.__run()
 
     def __run(self) -> list[WorkflowRunResult]:
         logger.info("check registered workflows")
@@ -188,6 +190,6 @@ def setup(
 
     return Client(
         Global(
-            state=s,
+            state=BufferCacheStateRepositoryProxy(s),
         )
     )

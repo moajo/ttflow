@@ -2,22 +2,22 @@ from ttflow import Client, RunContext
 from ttflow.core import _enque_event
 
 
-def test_中断機能が正しく動くこと(client: Client):
+def test_中断時の実行スキップが正しく動くこと(client: Client):
     ttflow = client
 
     value = []
 
-    @ttflow.subeffect()
-    def subefect(c: RunContext, arg: int):
+    @ttflow.sideeffect()
+    def sideefect(c: RunContext, arg: int):
         value.append(arg)
 
     @ttflow.workflow()
     def CI(c: RunContext, args: dict):
-        subefect(c, 1)
+        sideefect(c, 1)
         承認待ち(c)
-        subefect(c, 2)
+        sideefect(c, 2)
 
-    @ttflow.subeffect()
+    @ttflow.sideeffect()
     def 承認待ち(c: RunContext):
         c.wait_event("承認")
 

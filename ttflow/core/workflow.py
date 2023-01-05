@@ -14,7 +14,7 @@ from .context import Context
 from .global_env import Global, Workflow
 from .pause import PauseException, _save_paused_workflow
 from .run_context import RunContext
-from .trigger import EventTrigger, NullTrigger, Trigger
+from .trigger import EventTrigger, Trigger
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,7 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
     Returns:
         bool: _description_
     """
+
     try:
         wf.f(RunContext(g, c), args)
     except PauseException as e:
@@ -117,12 +118,12 @@ def workflow(g: Global, trigger: Optional[Union[Trigger, str]] = None):
     return _decorator
 
 
-def subeffect(g: Global):
+def sideeffect(g: Global):
     def _decorator(f):
         @functools.wraps(f)
         def _wrapper(*args, **kwargs):
             if len(args) == 0 or not isinstance(args[0], RunContext):
-                raise RuntimeError("subeffectはRunContextを第1引数に取る必要があります")
+                raise RuntimeError("sideeffectはRunContextを第1引数に取る必要があります")
             c = args[0]
             if _is_already_executed(g, c.get_context_data()) is not None:
                 return

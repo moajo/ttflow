@@ -1,5 +1,4 @@
 import pytest
-
 from ttflow import Client, RunContext, event_trigger
 from ttflow.system_states.completed import _get_completed_runs_log
 from ttflow.system_states.event_log import _get_event_logs

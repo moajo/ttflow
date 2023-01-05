@@ -29,7 +29,7 @@ def _define_workflow_for_test(client: Client):
             notification_to_app(c, "温度が低すぎます")
             c.set_state("温度状態", "red")
 
-    @ttflow.subeffect()
+    @ttflow.sideeffect()
     def notification_to_app(c: RunContext, message: str):
         # ここでアプリに通知を送信する
         c.log(f"通知ダミー: {message}")

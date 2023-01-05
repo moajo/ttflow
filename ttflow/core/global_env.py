@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from ..state_repository.base import StateRepository
+from ..state_repository.buffer_cache_proxy import BufferCacheStateRepositoryProxy
 from .trigger import Trigger
 
 
@@ -18,7 +18,7 @@ class Workflow:
 
 
 class Global:
-    def __init__(self, state: StateRepository):
+    def __init__(self, state: BufferCacheStateRepositoryProxy):
         self.state = state
 
         # 登録されたワークフロー

@@ -3,6 +3,11 @@ from typing import Any
 
 
 class StateRepository(metaclass=abc.ABCMeta):
+    """
+    ステートを永続化するためのインターフェースです
+    ステートはrunするときにロックされ、排他的に実行されます。
+    """
+
     @abc.abstractmethod
     def read_state(self, name: str, default=None) -> Any:
         raise NotImplementedError()

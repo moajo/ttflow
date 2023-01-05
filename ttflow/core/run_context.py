@@ -1,13 +1,11 @@
 from typing import Any
 
+from ..system_states.logs import log
 from .context import Context
-from .event import (
-    _enque_event,
-)
+from .event import _enque_event
 from .global_env import Global
 from .pause import _wait_event
 from .state import get_state, set_state
-from ..system_states.logs import log
 
 
 class RunContext:

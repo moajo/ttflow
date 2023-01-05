@@ -3,7 +3,6 @@ import json
 from ttflow import Client, RunContext
 from ttflow.core import _enque_event
 from ttflow.core.event import _read_events_from_state
-from ttflow.state_repository.on_memory_state import OnMemoryStateRepository
 from ttflow.system_states.logs import _get_logs
 
 from .utils import create_client_for_test
@@ -26,12 +25,12 @@ def _define_workflow_for_test(ttflow: Client):
         c.set_state("CD完了回数", count + 1)
         notification_to_app(c, "CD完了")
 
-    @ttflow.subeffect()
+    @ttflow.sideeffect()
     def notification_to_app(c: RunContext, message: str):
         # ここでアプリに通知を送信する
         c.log(f"通知ダミー: {message}")
 
-    @ttflow.subeffect()
+    @ttflow.sideeffect()
     def 承認待ち(c: RunContext):
         notification_to_app(c, f"承認事項がが1件あります:{c.get_context_data().run_id}")
         c.wait_event(f"承認:{c.get_context_data().run_id}")
@@ -41,8 +40,6 @@ def _define_workflow_for_test(ttflow: Client):
 def test_中断機能が正しく動くこと(client: Client):
     _define_workflow_for_test(client)
     s = client._global.state
-    assert isinstance(s, OnMemoryStateRepository)
-    assert len(client._global.workflows) == 1
 
     assert s.read_state("CD開始回数") is None
     assert s.read_state("CD完了回数") is None

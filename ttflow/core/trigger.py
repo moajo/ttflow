@@ -15,10 +15,3 @@ class EventTrigger(Trigger):
 #         self,
 #     ):
 #         super().__init__("polling")
-
-# 無効なトリガー
-class NullTrigger(Trigger):
-    def __init__(
-        self,
-    ):
-        super().__init__("null")
