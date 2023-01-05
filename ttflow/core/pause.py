@@ -4,7 +4,6 @@ from ..system_states.event_log import _get_event_logs
 from ..system_states.run_state import _is_already_executed, _mark_as_executed
 from .context import Context
 from .global_env import Global
-from .system_events.pause import _enque_pause_event
 
 # ワークフローの中断
 # ワークフローは中断時にPauseExceptionを投げる。
@@ -16,16 +15,6 @@ class PauseException(Exception):
     def __init__(self, pause_id: str):
         super().__init__()
         self.pause_id = pause_id
-
-
-def _save_paused_workflow(
-    g: Global,
-    workflow_name: str,
-    run_id: str,
-    pause_id: str,
-    args: Any,
-):
-    _enque_pause_event(g, workflow_name, run_id, pause_id, args)
 
 
 def _wait_event(g: Global, c: Context, event_name: str):

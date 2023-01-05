@@ -12,6 +12,7 @@ from .core.event import (
     load_events_from_state,
 )
 from .core.global_env import Global
+from .core.system_events.every import _enque_every_event, SYSTEM_EVENT__EVERY
 from .core.system_events.pause import try_parse_pause_event
 from .core.trigger import EventTrigger, Trigger
 from .core.workflow import (
@@ -32,6 +33,11 @@ logger = logging.getLogger(__name__)
 def event_trigger(name: str) -> Trigger:
     """イベントトリガー"""
     return EventTrigger(name)
+
+
+def every_trigger() -> Trigger:
+    """イベントトリガー"""
+    return EventTrigger(SYSTEM_EVENT__EVERY)
 
 
 def state_trigger(state_name: str) -> Trigger:
@@ -109,6 +115,9 @@ class Client:
 
     def __run(self) -> list[WorkflowRunResult]:
         logger.info("check registered workflows")
+
+        # 毎回実行するイベントを追加
+        _enque_every_event(self._global)
 
         # デプロイイベントの対応
         h = workflow_hash(self._global.workflows)

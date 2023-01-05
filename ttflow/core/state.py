@@ -10,21 +10,17 @@ from .global_env import Global
 def set_state(g: Global, c: Context, state_name: str, value):
     @_execute_once(g, c)
     def a():
-        write_state_with_changed_event(g, state_name, value)
+        # ステートを書き込み、変更があったら差分イベントを発行する
+        current_state = g.state.read_state(state_name)
+        g.state.save_state(state_name, value)
+        if current_state != value:
+            _enque_event(
+                g,
+                f"state_changed_{state_name}",
+                {"old": current_state, "new": value},
+            )
 
     return a()
-
-
-# ステートを書き込み、変更があったら差分イベントを発行する
-def write_state_with_changed_event(g: Global, state_name: str, value):
-    current_state = g.state.read_state(state_name)
-    g.state.save_state(state_name, value)
-    if current_state != value:
-        _enque_event(
-            g,
-            f"state_changed_{state_name}",
-            {"old": current_state, "new": value},
-        )
 
 
 def get_state(g: Global, c: Context, state_name: str, default: Any = None):

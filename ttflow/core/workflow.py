@@ -8,8 +8,9 @@ from ..system_states.logs import _get_logs
 from ..system_states.run_state import _delete_run_state, _execute_once
 from .context import Context
 from .global_env import Global, Workflow
-from .pause import PauseException, _save_paused_workflow
+from .pause import PauseException
 from .run_context import RunContext
+from .system_events.pause import _enque_pause_event
 from .trigger import EventTrigger, Trigger
 
 logger = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
         wf.f(RunContext(g, c), args)
     except PauseException as e:
         logger.info("ワークフローを中断します")
-        _save_paused_workflow(
+        _enque_pause_event(
             g,
             workflow_name=wf.f.__name__,
             run_id=c.run_id,
