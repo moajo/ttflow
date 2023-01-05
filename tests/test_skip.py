@@ -153,3 +153,51 @@ def test_無限ループ対応(client: Client):
     assert results[0].status == "succeeded"
     logs.extend(["B:3"])
     assert results[0].logs == logs
+
+
+def test_中断再開時のstate読み書きに再現性があること(client: Client):
+    ttflow = client
+
+    @ttflow.workflow()
+    def loop(c: RunContext, args: dict):
+        while True:
+            c.log(f"A:{c.get_state('count', 0)}")
+            c.pause_once()
+            c.log(f"B:{c.get_state('count', 0)}")
+            c.set_state("count", c.get_state("count", 0) + 1)
+
+            if c.get_state("count") > 3:
+                break
+
+    results = client.run("loop")
+
+    logs = ["A:0"]
+
+    assert len(results) == 1
+    assert results[0].workflow_name == "loop"
+    assert results[0].status == "paused"
+    assert results[0].logs == logs
+
+    results = client.run()
+    assert results[0].workflow_name == "loop"
+    assert results[0].status == "paused"
+    logs.extend(["B:0", "A:1"])
+    assert results[0].logs == logs
+
+    results = client.run()
+    assert results[0].workflow_name == "loop"
+    assert results[0].status == "paused"
+    logs.extend(["B:1", "A:2"])
+    assert results[0].logs == logs
+
+    results = client.run()
+    assert results[0].workflow_name == "loop"
+    assert results[0].status == "paused"
+    logs.extend(["B:2", "A:3"])
+    assert results[0].logs == logs
+
+    results = client.run()
+    assert results[0].workflow_name == "loop"
+    assert results[0].status == "succeeded"
+    logs.extend(["B:3"])
+    assert results[0].logs == logs
