@@ -13,7 +13,7 @@ class S3StateRepository(StateRepository):
         self.prefix = prefix
 
     def save_state(self, name: str, value):
-        client: botostubs.S3 = boto3.client("s3", region_name="us-east-1")
+        client: botostubs.S3 = boto3.client("s3")
         client.put_object(
             Bucket=self.bucket_name,
             Key=f"{self.prefix}/{name}",
@@ -26,7 +26,7 @@ class S3StateRepository(StateRepository):
         bucket.objects.filter(Prefix=f"{self.prefix}/").delete()
 
     def read_state(self, name: str, default=None) -> Any:
-        client: botostubs.S3 = boto3.client("s3", region_name="us-east-1")
+        client: botostubs.S3 = boto3.client("s3")
         try:
             response = client.get_object(
                 Bucket=self.bucket_name,
@@ -43,7 +43,7 @@ class S3StateRepository(StateRepository):
         self.save_state("_system_lock", "locked")
 
     def unlock_state(self):
-        client: botostubs.S3 = boto3.client("s3", region_name="us-east-1")
+        client: botostubs.S3 = boto3.client("s3")
         client.delete_object(
             Bucket=self.bucket_name,
             Key=f"{self.prefix}/_system_lock",
