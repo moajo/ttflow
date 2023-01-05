@@ -15,6 +15,7 @@ class LocalFileStateRepository(StateRepository):
             with open(self.state_file, "r") as f:
                 state = json.load(f)
         state[name] = value
+        self.state_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.state_file, "w") as f:
             json.dump(state, f, sort_keys=True, ensure_ascii=False, indent=2)
 
