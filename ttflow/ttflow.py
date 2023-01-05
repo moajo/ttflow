@@ -227,3 +227,6 @@ def setup(
             state=BufferCacheStateRepositoryProxy(s),
         )
     )
+
+
+# ワークフロー変更時に中断してるやつを破棄するようにする
