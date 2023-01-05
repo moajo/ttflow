@@ -40,6 +40,8 @@ def add_failed_runs_log(g: Global, c: Context):
 def _add_runs_log(g: Global, c: Context, data: dict):
     logs = get_state(g, c, _log_key(), [])
     logs.append(data)
+    # 最新1000件のみ保持
+    logs = logs[-1000:]
     g.state.save_state(_log_key(), logs)
 
 

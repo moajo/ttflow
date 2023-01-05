@@ -20,6 +20,8 @@ def _add_event_log(g: Global, event_name: str, args: dict):
             "timestamp": time.time(),
         }
     )
+    # 最新1000件のみ保持
+    event_log = event_log[-1000:]
     g.state.save_state(_log_key(), event_log)
 
 

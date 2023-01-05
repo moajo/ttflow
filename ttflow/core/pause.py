@@ -55,13 +55,3 @@ def _pause_once(g: Global, c: Context):
     token = c.get_run_state_token()  # fを実行する前に計算しておく必要がある。変わってしまうので
     _mark_as_executed(g, c, token, None)
     raise PauseException(c.get_run_state_token())
-
-    # @_execute_once(g, c)
-    # def a():
-    #     pause_id = f"{c.run_id}:{c.used_count}"
-
-    #     # 初回なので中断情報を保存する
-    #     if c.paused_info is None:
-    #         raise PauseException(pause_id)
-
-    # return a()

@@ -53,6 +53,10 @@ def _delete_run_state(g: Global, run_id: str):
 
 
 def _execute_once(g: Global, c: Context):
+    """fを実行する前に、実行済みかどうかをチェックし、実行済みならキャッシュを返す。
+    fが例外を投げる場合はキャッシュできないので注意
+    """
+
     def _decorator(f):
         @functools.wraps(f)
         def _wrapper(*args, **kwargs):
