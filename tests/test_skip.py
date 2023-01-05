@@ -11,7 +11,7 @@ def test_中断機能が正しく動くこと(client: Client):
     def subefect(c: RunContext, arg: int):
         value.append(arg)
 
-    @ttflow.workflow(trigger="test")
+    @ttflow.workflow()
     def CI(c: RunContext, args: dict):
         subefect(c, 1)
         承認待ち(c)
@@ -21,7 +21,7 @@ def test_中断機能が正しく動くこと(client: Client):
     def 承認待ち(c: RunContext):
         c.wait_event("承認")
 
-    results = client.run("test", {"値": "hoge"})
+    results = client.run("CI", {"値": "hoge"})
 
     assert len(results) == 1
     assert results[0].workflow_name == "CI"

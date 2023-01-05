@@ -37,6 +37,7 @@ class WorkflowRunResult:
     workflow_name: str
     run_id: str
     status: str  # succeeded, failed, paused
+    error_message: Optional[str]
     logs: list[str]
 
 
@@ -69,6 +70,7 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
             workflow_name=wf.f.__name__,
             run_id=c.run_id,
             status="paused",
+            error_message=None,
             logs=_get_logs(g, c.run_id),
         )
     except Exception as e:
@@ -79,6 +81,7 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
             workflow_name=wf.f.__name__,
             run_id=c.run_id,
             status="failed",
+            error_message=repr(e),
             logs=_get_logs(g, c.run_id),
         )
     add_completed_runs_log(g, c)
@@ -88,19 +91,21 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
         workflow_name=wf.f.__name__,
         run_id=c.run_id,
         status="succeeded",
+        error_message=None,
         logs=_get_logs(g, c.run_id),
     )
     # TODO: そのうちワークフロー実行後イベントを実装
 
 
 def workflow(g: Global, trigger: Optional[Union[Trigger, str]] = None):
-    if trigger is None:
-        trigger = NullTrigger()
-    elif isinstance(trigger, str):
-        trigger = EventTrigger(f"_trigger_{trigger}")
-
     def _decorator(f):
-        wf = Workflow(trigger, f)
+        if trigger is None:
+            t = EventTrigger(f"_trigger_{f.__name__}")
+        elif isinstance(trigger, str):
+            t = EventTrigger(f"_trigger_{trigger}")
+        else:
+            t = trigger
+        wf = Workflow(t, f)
         g.workflows.append(wf)
 
         @functools.wraps(f)
