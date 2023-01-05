@@ -65,7 +65,7 @@ def _define_workflow(ttflow: Client):
 def run(
     name: Optional[str] = None,
     arg: dict = {},
-    state_rpository: str = "local:state_sample.json",
+    state_rpository: str = "local:states/sample.json",
 ):
     ttflow = setup(
         state_repository=state_rpository,
@@ -74,7 +74,7 @@ def run(
     ttflow.run(name, arg)
 
 
-def clear_state(state_rpository: str = "local:state_sample.json"):
+def clear_state(state_rpository: str = "local:states/sample.json"):
     ttflow = setup(
         state_repository=state_rpository,
     )

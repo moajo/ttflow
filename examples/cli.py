@@ -4,7 +4,7 @@ from ttflow.powerup.run_by_cli import run_by_cli
 # TRY: `python examples/cli.py run 処理1`
 
 ttflow = setup(
-    state_repository="local:state_cli.json",
+    state_repository="local:states/cli.json",
 )
 
 
