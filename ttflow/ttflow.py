@@ -11,7 +11,7 @@ from .core.event import (
     iterate_events,
     load_events_from_state,
 )
-from .core.global_env import Global
+from .core.global_env import Global, Workflow
 from .core.system_events.every import SYSTEM_EVENT__EVERY, _enque_every_event
 from .core.system_events.pause import try_parse_pause_event
 from .core.trigger import EventTrigger, Trigger
@@ -98,6 +98,9 @@ class Client:
 
     def sideeffect(self):
         return sideeffect(self._global)
+
+    def list_registered_workflows(self):
+        return [Workflow(w.trigger, w.f) for w in self._global.workflows]
 
     def run(self, trigger_name: Optional[str] = None, args: Any = None):
         """

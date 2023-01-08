@@ -4,9 +4,9 @@ from ttflow.system_states.event_log import _get_event_logs
 
 
 def _define_workflow_for_test(client: Client):
-    # 外部から温度変化を受信する
     @client.workflow(trigger=event_trigger("workflows_changed"))
     def ワークフローのデプロイイベント(c: RunContext, args: dict):
+        """外部から温度変化を受信する"""
         c.log("デプロイイベントを受信しました")
         count = c.get_state("デプロイ回数")
         if count is None:
@@ -32,6 +32,10 @@ def test_正常系(client: Client):
         "state_changed_デプロイ回数",  # 初回なので発行される
     ]
     assert len(_get_completed_runs_log(client._global)) == 1
+    wfs = client.list_registered_workflows()
+    assert len(wfs) == 1
+    assert wfs[0].name == "ワークフローのデプロイイベント"
+    assert wfs[0].description == "外部から温度変化を受信する"
 
 
 def test_正常系2(client: Client):

@@ -16,6 +16,14 @@ class Workflow:
         self.trigger = trigger
         self.f = f
 
+    @property
+    def name(self):
+        return self.f.__name__
+
+    @property
+    def description(self):
+        return self.f.__doc__
+
 
 class Global:
     def __init__(self, state: BufferCacheStateRepositoryProxy):
