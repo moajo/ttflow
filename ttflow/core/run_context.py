@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from ..system_states.logs import log
 from .context import Context
@@ -22,8 +22,15 @@ class RunContext:
     def set_state(self, state_name: str, value):
         return set_state(self._global, self._context, state_name, value)
 
-    def add_list_state(self, state_name: str, value):
-        return add_list_state(self._global, self._context, state_name, value)
+    def add_list_state(
+        self,
+        state_name: str,
+        value,
+        max_length: Optional[int] = None,
+    ):
+        return add_list_state(
+            self._global, self._context, state_name, value, max_length=max_length
+        )
 
     def log(self, message: str):
         return log(self._global, self._context, message)
