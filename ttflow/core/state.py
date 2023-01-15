@@ -50,9 +50,10 @@ def add_list_state(
     value,
     max_length: Optional[int] = None,
 ):
-    values = get_state(g, c, state_name, [])
+    values = get_state(g, c, state_name, default=[])
     if type(values) != list:
         raise Exception(f"state {state_name} is not list")
+    values = [a for a in values]
     values.append(value)
     if max_length is not None:
         values = values[-max_length:]
