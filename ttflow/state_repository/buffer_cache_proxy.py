@@ -34,7 +34,7 @@ class BufferCacheStateRepositoryProxy(StateRepository):
                 self.state[name] = self.state_repository.read_state(
                     name, default=default
                 )
-            return self.state[name]
+            return json.loads(json.dumps(self.state[name]))
         return self.state_repository.read_state(name, default=default)
 
     def lock_state(self):
