@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ttflow"
-version = "0.5.7"
+version = "0.5.8"
 description = "simple workflow engine"
 authors = ["moajo <mimirosiasd@gmail.com>"]
 
