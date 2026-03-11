@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uv sync
+      - run: uv sync --extra web
       - run: uv run pytest
 
   build:

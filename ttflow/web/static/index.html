@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ttflow Dashboard</title>
+    <style>
+        :root {
+            --bg: #f5f5f5;
+            --card-bg: #fff;
+            --text: #333;
+            --text-muted: #666;
+            --border: #ddd;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --paused: #7c3aed;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: var(--primary);
+            color: #fff;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 { font-size: 1.3rem; font-weight: 600; }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+
+        .status-dot.locked { background: var(--danger); }
+
+        main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card.full-width { grid-column: 1 / -1; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th, td { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+        th { font-weight: 600; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+        tr:last-child td { border-bottom: none; }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #dcfce7; color: var(--success); }
+        .badge-failed { background: #fef2f2; color: var(--danger); }
+        .badge-paused { background: #f3e8ff; color: var(--paused); }
+
+        .btn {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn:hover { background: var(--primary-hover); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-sm { padding: 0.2rem 0.5rem; font-size: 0.75rem; }
+        .btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: #fff; }
+
+        .empty { color: var(--text-muted); font-size: 0.875rem; padding: 1rem 0; text-align: center; }
+
+        .trigger-form {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .trigger-form input {
+            flex: 1;
+            padding: 0.4rem 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .trigger-form input:focus { outline: none; border-color: var(--primary); }
+
+        .logs-panel {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-family: "SF Mono", Monaco, Consolas, monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .logs-panel .log-line { white-space: pre-wrap; word-break: break-all; }
+
+        .timestamp {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .auto-refresh {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .auto-refresh label { cursor: pointer; }
+
+        #result-toast {
+            display: none;
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .toast-success { background: #dcfce7; color: var(--success); border: 1px solid #bbf7d0; }
+        .toast-error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .card.full-width { grid-column: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>ttflow Dashboard</h1>
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <span class="status-badge">
+            <span class="status-dot" id="lock-dot"></span>
+            <span id="lock-text">unlocked</span>
+        </span>
+        <div class="auto-refresh">
+            <label>
+                <input type="checkbox" id="auto-refresh-toggle" checked>
+                Auto refresh (5s)
+            </label>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="grid">
+        <!-- ワークフロー一覧 -->
+        <div class="card">
+            <h2>Workflows</h2>
+            <table>
+                <thead><tr><th>Name</th><th>Trigger</th><th>Action</th></tr></thead>
+                <tbody id="workflows-body"></tbody>
+            </table>
+            <div class="trigger-form">
+                <input type="text" id="trigger-name" placeholder="trigger name">
+                <button class="btn" onclick="manualTrigger()">Trigger</button>
+            </div>
+        </div>
+
+        <!-- 中断中ワークフロー -->
+        <div class="card">
+            <h2>Paused Workflows</h2>
+            <table>
+                <thead><tr><th>Workflow</th><th>Run ID</th><th>Paused At</th><th>Action</th></tr></thead>
+                <tbody id="paused-body"></tbody>
+            </table>
+        </div>
+
+        <!-- 実行履歴 -->
+        <div class="card full-width">
+            <h2>Execution History</h2>
+            <table>
+                <thead><tr><th>Workflow</th><th>Run ID</th><th>Status</th><th>Timestamp</th><th>Logs</th></tr></thead>
+                <tbody id="runs-body"></tbody>
+            </table>
+        </div>
+
+        <!-- イベント履歴 -->
+        <div class="card full-width">
+            <h2>Event History</h2>
+            <table>
+                <thead><tr><th>Event</th><th>Args</th><th>Timestamp</th></tr></thead>
+                <tbody id="events-body"></tbody>
+            </table>
+        </div>
+
+        <!-- ログ表示 -->
+        <div class="card full-width" id="logs-card" style="display:none;">
+            <h2>Run Logs <span id="logs-run-id" style="font-weight:400; font-size:0.85rem; color:#666;"></span></h2>
+            <div class="logs-panel" id="logs-panel"></div>
+        </div>
+    </div>
+</main>
+
+<div id="result-toast"></div>
+
+<script>
+const API = "";
+let refreshTimer = null;
+
+function formatTime(ts) {
+    if (!ts) return "-";
+    const d = new Date(ts * 1000);
+    return d.toLocaleString("ja-JP");
+}
+
+function shortId(id) {
+    if (!id) return "-";
+    return id.substring(0, 8) + "...";
+}
+
+function showToast(message, isError) {
+    const el = document.getElementById("result-toast");
+    el.textContent = message;
+    el.className = isError ? "toast-error" : "toast-success";
+    el.style.display = "block";
+    setTimeout(() => { el.style.display = "none"; }, 3000);
+}
+
+function triggerName(trigger) {
+    if (!trigger || !trigger.event_name) return "-";
+    const name = trigger.event_name;
+    if (name.startsWith("_trigger_")) return name.substring(9);
+    if (name === "_every") return "every run";
+    if (name.startsWith("state_changed_")) return "state:" + name.substring(14);
+    return name;
+}
+
+async function fetchWorkflows() {
+    const res = await fetch(API + "/api/workflows");
+    const data = await res.json();
+    const tbody = document.getElementById("workflows-body");
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty">No workflows registered</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(wf => `
+        <tr>
+            <td><strong>${wf.name}</strong>${wf.description ? '<br><small style="color:#666">' + wf.description + '</small>' : ''}</td>
+            <td><code>${triggerName(wf.trigger)}</code></td>
+            <td><button class="btn btn-sm btn-outline" onclick="triggerWorkflow('${wf.name}')">Run</button></td>
+        </tr>
+    `).join("");
+}
+
+async function fetchStatus() {
+    const res = await fetch(API + "/api/status");
+    const data = await res.json();
+    const dot = document.getElementById("lock-dot");
+    const text = document.getElementById("lock-text");
+    dot.className = data.is_locked ? "status-dot locked" : "status-dot";
+    text.textContent = data.is_locked ? "locked" : "unlocked";
+
+    const tbody = document.getElementById("paused-body");
+    if (data.paused_workflows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">No paused workflows</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.paused_workflows.map(pw => `
+        <tr>
+            <td>${pw.workflow_name}</td>
+            <td><code title="${pw.run_id}">${shortId(pw.run_id)}</code></td>
+            <td class="timestamp">${formatTime(pw.timestamp)}</td>
+            <td><button class="btn btn-sm" onclick="resumeWorkflow('${pw.workflow_name}')">Resume</button></td>
+        </tr>
+    `).join("");
+}
+
+async function fetchRuns() {
+    const res = await fetch(API + "/api/runs");
+    const data = await res.json();
+    const tbody = document.getElementById("runs-body");
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No execution history</td></tr>';
+        return;
+    }
+    const rows = data.slice().reverse().slice(0, 50);
+    tbody.innerHTML = rows.map(r => {
+        const cls = r.status === "success" ? "badge-success" : "badge-failed";
+        return `
+        <tr>
+            <td>${r.workflow_name}</td>
+            <td><code title="${r.run_id}">${shortId(r.run_id)}</code></td>
+            <td><span class="badge ${cls}">${r.status}</span></td>
+            <td class="timestamp">${formatTime(r.timestamp)}</td>
+            <td><button class="btn btn-sm btn-outline" onclick="showLogs('${r.run_id}')">Logs</button></td>
+        </tr>`;
+    }).join("");
+}
+
+async function fetchEvents() {
+    const res = await fetch(API + "/api/events");
+    const data = await res.json();
+    const tbody = document.getElementById("events-body");
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="empty">No events recorded</td></tr>';
+        return;
+    }
+    const rows = data.slice().reverse().slice(0, 50);
+    tbody.innerHTML = rows.map(ev => `
+        <tr>
+            <td><code>${ev.event_name}</code></td>
+            <td>${ev.args !== null && ev.args !== undefined ? '<code>' + JSON.stringify(ev.args) + '</code>' : '-'}</td>
+            <td class="timestamp">${formatTime(ev.timestamp)}</td>
+        </tr>
+    `).join("");
+}
+
+async function showLogs(runId) {
+    const card = document.getElementById("logs-card");
+    const panel = document.getElementById("logs-panel");
+    const label = document.getElementById("logs-run-id");
+    card.style.display = "block";
+    label.textContent = "(" + shortId(runId) + ")";
+    panel.innerHTML = "Loading...";
+
+    const res = await fetch(API + "/api/runs/" + runId + "/logs");
+    const logs = await res.json();
+    if (logs.length === 0) {
+        panel.innerHTML = '<span style="color:#888">No logs for this run</span>';
+    } else {
+        panel.innerHTML = logs.map(l => '<div class="log-line">' + escapeHtml(l) + '</div>').join("");
+    }
+    card.scrollIntoView({ behavior: "smooth" });
+}
+
+function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+}
+
+async function triggerWorkflow(name) {
+    try {
+        const res = await fetch(API + "/api/trigger/" + name, { method: "POST" });
+        const data = await res.json();
+        showToast("Triggered: " + name, false);
+        refreshAll();
+    } catch (e) {
+        showToast("Error: " + e.message, true);
+    }
+}
+
+async function manualTrigger() {
+    const input = document.getElementById("trigger-name");
+    const name = input.value.trim();
+    if (!name) return;
+    await triggerWorkflow(name);
+    input.value = "";
+}
+
+async function resumeWorkflow(name) {
+    try {
+        const res = await fetch(API + "/api/resume/" + name, { method: "POST" });
+        const data = await res.json();
+        showToast("Resumed: " + name, false);
+        refreshAll();
+    } catch (e) {
+        showToast("Error: " + e.message, true);
+    }
+}
+
+async function refreshAll() {
+    await Promise.all([fetchWorkflows(), fetchStatus(), fetchRuns(), fetchEvents()]);
+}
+
+function setupAutoRefresh() {
+    const toggle = document.getElementById("auto-refresh-toggle");
+    toggle.addEventListener("change", () => {
+        if (toggle.checked) {
+            refreshTimer = setInterval(refreshAll, 5000);
+        } else {
+            clearInterval(refreshTimer);
+            refreshTimer = null;
+        }
+    });
+    refreshTimer = setInterval(refreshAll, 5000);
+}
+
+// 初期ロード
+refreshAll();
+setupAutoRefresh();
+</script>
+</body>
+</html>
