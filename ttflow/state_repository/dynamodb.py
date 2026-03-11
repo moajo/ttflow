@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 import boto3
-import botostubs
+from mypy_boto3_dynamodb.client import DynamoDBClient
 
 from .base import StateRepository
 
@@ -12,7 +12,7 @@ class DynamoDBStateRepository(StateRepository):
         self.table_name = table_name
 
     def save_state(self, name: str, value):
-        client: botostubs.DynamoDB = boto3.client("dynamodb", region_name="us-east-1")
+        client: DynamoDBClient = boto3.client("dynamodb", region_name="us-east-1")
         client.put_item(
             TableName=self.table_name,
             Item={
@@ -26,7 +26,7 @@ class DynamoDBStateRepository(StateRepository):
         pass  # TODO: implement
 
     def read_state(self, name: str, default=None) -> Any:
-        client: botostubs.DynamoDB = boto3.client("dynamodb", region_name="us-east-1")
+        client: DynamoDBClient = boto3.client("dynamodb", region_name="us-east-1")
         response = client.get_item(
             TableName=self.table_name,
             Key={

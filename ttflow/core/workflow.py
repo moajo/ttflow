@@ -120,7 +120,9 @@ def sideeffect(g: Global):
         @functools.wraps(f)
         def _wrapper(*args, **kwargs):
             if len(args) == 0 or not isinstance(args[0], RunContext):
-                raise RuntimeError("sideeffectはRunContextを第1引数に取る必要があります")
+                raise RuntimeError(
+                    "sideeffectはRunContextを第1引数に取る必要があります"
+                )
             c = args[0]
 
             @_execute_once(g, c.get_context_data())

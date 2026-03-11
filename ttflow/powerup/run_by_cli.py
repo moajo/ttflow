@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
 import fire
+
 from ttflow import Client, WorkflowRunResult
 
 
@@ -17,7 +18,7 @@ def _print_workflow_results(results: list[WorkflowRunResult]):
     print("---------RUN SUMMARY---------")
     print(f"{len(results)}件のワークフローが実行されました")
     for i, result in enumerate(results):
-        print(f"\t{i+1}件目")
+        print(f"\t{i + 1}件目")
         print(f"\t  ワークフロー名: {result.workflow_name}")
         print(f"\t  run_id: {result.run_id}")
         print(f"\t  状態: {result.status}")

@@ -1,5 +1,4 @@
 from ttflow import Client, RunContext, state_trigger
-from ttflow.core import _enque_event
 
 
 def test_変数の変化イベントが正しくトリガーされること(client: Client):

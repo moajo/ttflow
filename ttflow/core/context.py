@@ -14,7 +14,9 @@ class Context:
         paused_info: Optional[dict] = None,
     ):
         self.workflow_name = workflow_name
-        self.paused_info = paused_info  # このrunがpauseからの再開だった場合、そのpause情報が入る
+        self.paused_info = (
+            paused_info  # このrunがpauseからの再開だった場合、そのpause情報が入る
+        )
         if run_id is None:
             run_id = str(random.randint(0, 1000000000))  # TODO: UUIDにする
         self.run_id = run_id

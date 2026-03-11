@@ -1,5 +1,5 @@
-from dataclasses import asdict
 import json
+from dataclasses import asdict
 
 from ttflow import Client, RunContext
 from ttflow.system_states.completed import get_completed_runs_log

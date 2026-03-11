@@ -1,11 +1,13 @@
 .PHONY: test
 test:
-	poetry run pytest -vv
+	uv run pytest -vv
 
 .PHONY: fmt
 fmt:
-	poetry run pysen run format
+	uv run ruff format .
+	uv run ruff check --fix .
 
 .PHONY: lint
 lint:
-	poetry run pysen run lint
+	uv run ruff check .
+	uv run ruff format --check .

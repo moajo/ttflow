@@ -63,7 +63,9 @@ def _execute_once(g: Global, c: Context):
             cache = _is_already_executed(g, c)
             if cache is not None:
                 return cache.value
-            token = c.get_run_state_token()  # fを実行する前に計算しておく必要がある。変わってしまうので
+            token = (
+                c.get_run_state_token()
+            )  # fを実行する前に計算しておく必要がある。変わってしまうので
             res = f(*args, **kwargs)
             return _mark_as_executed(g, c, token, res)
 

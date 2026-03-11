@@ -1,4 +1,5 @@
 import pytest
+
 from ttflow import Client, RunContext, state_trigger
 from ttflow.system_states.completed import _get_completed_runs_log
 from ttflow.system_states.event_log import _get_event_logs
@@ -58,7 +59,9 @@ def test_温度監視ユースケースの処理1(client: Client):
         (14, "low"),
     ],
 )
-def test_温度監視ユースケースの処理__温度状態が正しく変化する(t: int, expect: str, client: Client):
+def test_温度監視ユースケースの処理__温度状態が正しく変化する(
+    t: int, expect: str, client: Client
+):
     _define_workflow_for_test(client)
 
     client.run()
