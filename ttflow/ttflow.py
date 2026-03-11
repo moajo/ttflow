@@ -109,8 +109,8 @@ class Client:
         トリガーに基づいてワークフローを実行します
 
         Args:
-            name (str): _description_
-            args (Any): _description_
+            trigger_name: トリガー名。省略時は中断中のワークフローのみ再開
+            args: ワークフローに渡す引数
         """
         if trigger_name is not None:
             _enque_trigger(self._global, trigger_name, args)
