@@ -73,3 +73,21 @@ def _execute_once(g: Global, c: Context):
         return _wrapper
 
     return _decorator
+
+
+def _execute_once_async(g: Global, c: Context):
+    """_execute_onceの非同期版。awaitした結果をキャッシュする"""
+
+    def _decorator(f):
+        @functools.wraps(f)
+        async def _wrapper(*args, **kwargs):
+            cache = _is_already_executed(g, c)
+            if cache is not None:
+                return cache.value
+            token = c.get_run_state_token()
+            res = await f(*args, **kwargs)
+            return _mark_as_executed(g, c, token, res)
+
+        return _wrapper
+
+    return _decorator

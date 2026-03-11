@@ -160,6 +160,7 @@ class TestAddListState:
 
         results = client.run("wf")
         assert results[0].status == "failed"
+        assert results[0].error_message is not None
         assert "InvalidStateError" in results[0].error_message
 
 

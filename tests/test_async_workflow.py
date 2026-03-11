@@ -1,9 +1,6 @@
 """asyncワークフローに関するテスト"""
 
-import pytest
-
 from ttflow import Client, RunContext, event_trigger
-
 
 # --- 基本的なasyncワークフロー ---
 
@@ -44,6 +41,7 @@ class TestAsyncWorkflowBasic:
 
         results = client.run("wf")
         assert results[0].status == "failed"
+        assert results[0].error_message is not None
         assert "ValueError" in results[0].error_message
         assert "async boom" in results[0].error_message
 
@@ -274,7 +272,7 @@ class TestAsyncSideeffectFromSyncWorkflow:
         @client.workflow()
         def wf(c: RunContext, args: dict):
             # syncワークフローからasync sideeffectを呼ぶ → awaitできないのでエラー
-            async_effect(c)
+            async_effect(c)  # type: ignore[unused-coroutine]
 
         results = client.run("wf")
         assert results[0].status == "failed"
