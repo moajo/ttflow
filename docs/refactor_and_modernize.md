@@ -17,9 +17,7 @@ Phase 1〜4 は完了済み。以下は残りの作業。
 
 ## Phase 6: テスト強化
 
-- `pytest-cov` 導入でカバレッジ計測
 - StateRepository のI/Oエラー系テスト追加
-- CIでカバレッジレポート出力
 
 ---
 
