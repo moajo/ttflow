@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -12,16 +13,16 @@ class Event:
 
 
 class Workflow:
-    def __init__(self, trigger: Trigger, f):
+    def __init__(self, trigger: Trigger, f: Callable):
         self.trigger = trigger
         self.f = f
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.f.__name__
 
     @property
-    def description(self):
+    def description(self) -> str | None:
         return self.f.__doc__
 
 
@@ -38,6 +39,6 @@ class Global:
         # 実行中にエンキューされたイベント。
         self.events_for_next_run: list[Event] = []
 
-    def purge_events(self):
+    def purge_events(self) -> None:
         self.events = []
         self.events_for_next_run = []

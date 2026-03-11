@@ -6,7 +6,8 @@ from .global_env import Global
 # ワークフローの中断
 # ワークフローは中断時にPauseExceptionを投げる。
 # その場合、stateに中断情報が保存される。
-# 中断ワークフローが再実行される場合、run_idが同じになるのでrun_idに対して処理が冪等になっていれば、何度中断しても問題ない。
+# 中断ワークフローが再実行される場合、run_idが同じになるので
+# run_idに対して処理が冪等になっていれば、何度中断しても問題ない。
 
 
 class PauseException(Exception):
@@ -15,7 +16,7 @@ class PauseException(Exception):
         self.pause_id = pause_id
 
 
-def _wait_event(g: Global, c: Context, event_name: str):
+def _wait_event(g: Global, c: Context, event_name: str) -> None:
     c._use()
     pause_id = f"{c.run_id}:{c.used_count}"
 
@@ -34,13 +35,12 @@ def _wait_event(g: Global, c: Context, event_name: str):
         raise PauseException(pause_id)
 
 
-def _pause_once(g: Global, c: Context):
+def _pause_once(g: Global, c: Context) -> None:
     """一度だけ中断します。次回無条件で再開します"""
     cache = _is_already_executed(g, c)
     if cache is not None:
         return cache.value
-    token = (
-        c.get_run_state_token()
-    )  # fを実行する前に計算しておく必要がある。変わってしまうので
+    # fを実行する前に計算しておく必要がある。変わってしまうので
+    token = c.get_run_state_token()
     _mark_as_executed(g, c, token, None)
     raise PauseException(c.get_run_state_token())

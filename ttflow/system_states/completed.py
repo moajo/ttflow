@@ -18,11 +18,10 @@ class CompletedLog:
     status: str
 
 
-def _log_key():
-    return "_completed"
+_LOG_KEY = "_completed"
 
 
-def add_completed_runs_log(g: Global, c: Context):
+def add_completed_runs_log(g: Global, c: Context) -> None:
     _add_runs_log(
         g,
         c,
@@ -37,7 +36,7 @@ def add_completed_runs_log(g: Global, c: Context):
     )
 
 
-def add_failed_runs_log(g: Global, c: Context):
+def add_failed_runs_log(g: Global, c: Context) -> None:
     _add_runs_log(
         g,
         c,
@@ -52,14 +51,14 @@ def add_failed_runs_log(g: Global, c: Context):
     )
 
 
-def _add_runs_log(g: Global, c: Context, data: dict):
-    _add_list_state_raw(g, _log_key(), data, max_length=1000)
+def _add_runs_log(g: Global, c: Context, data: dict) -> None:
+    _add_list_state_raw(g, _LOG_KEY, data, max_length=1000)
 
 
-def get_completed_runs_log(g: Global, c: Context):
-    v = get_state(g, c, _log_key(), [])
+def get_completed_runs_log(g: Global, c: Context) -> list[CompletedLog]:
+    v = get_state(g, c, _LOG_KEY, [])
     return [from_dict(CompletedLog, x) for x in v]
 
 
-def _get_completed_runs_log(g: Global):
-    return g.state.read_state(_log_key(), [])
+def _get_completed_runs_log(g: Global) -> list[dict]:
+    return g.state.read_state(_LOG_KEY, [])

@@ -9,7 +9,7 @@ class StateRepository(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def read_state(self, name: str, default=None) -> Any:
+    def read_state(self, name: str, default: Any = None) -> Any:
         raise NotImplementedError()
 
     @abc.abstractmethod
@@ -17,16 +17,16 @@ class StateRepository(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def clear_state(self):
+    def clear_state(self) -> None:
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def lock_state(self):
+    def lock_state(self) -> None:
         """ステートを排他的にロックします"""
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def unlock_state(self):
+    def unlock_state(self) -> None:
         """ステートのロックを開放します"""
         raise NotImplementedError()
 

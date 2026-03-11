@@ -1,7 +1,6 @@
 from dataclasses import dataclass
-from typing import Optional
 
-from ..event import Event, _enque_event
+from ..event import _enque_event
 from ..global_env import Global
 
 # _every イベントは、毎回一度自動的に発生するイベントです。
@@ -15,7 +14,7 @@ class EveryEvent:
     pass
 
 
-def _enque_every_event(g: Global):
+def _enque_every_event(g: Global) -> None:
     _enque_event(
         g,
         event_name=SYSTEM_EVENT__EVERY,
@@ -24,7 +23,7 @@ def _enque_every_event(g: Global):
     )
 
 
-def try_parse_event__every(event_raw: Event) -> Optional[EveryEvent]:
+def try_parse_event__every(event_raw) -> EveryEvent | None:
     if event_raw.event_name != SYSTEM_EVENT__EVERY:
         return None
     return EveryEvent()

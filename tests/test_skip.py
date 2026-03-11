@@ -102,7 +102,7 @@ def test_abort(client: Client):
     assert results[0].status == "failed"
     assert (
         results[0].error_message
-        == "RuntimeError('workflow can not be called directly')"
+        == "WorkflowDirectCallError('workflow can not be called directly')"
     )
     assert len(results[0].logs) == 0
 

@@ -1,16 +1,17 @@
 import functools
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
+from ..constants import STATE_PREFIX_RUN_STATE
 from ..core.context import Context
 from ..core.global_env import Global
 
 # run_idに紐づくrunの実行状態を保持する
-# TODO: この状態は、run_idに紐づくrunが完了したときに削除される
+# NOTE: この状態は、run_idに紐づくrunが完了したときに削除される
 
 
-def _log_key(run_id):
-    return f"_run_state:{run_id}"
+def _log_key(run_id: str) -> str:
+    return f"{STATE_PREFIX_RUN_STATE}:{run_id}"
 
 
 @dataclass
@@ -18,7 +19,7 @@ class ExecutedCache:
     value: Any
 
 
-def _is_already_executed(g: Global, c: Context) -> Optional[ExecutedCache]:
+def _is_already_executed(g: Global, c: Context) -> ExecutedCache | None:
     c._use()
     run_state_token = c.get_run_state_token()
     run_states = g.state.read_state(_log_key(c.run_id), default=[])

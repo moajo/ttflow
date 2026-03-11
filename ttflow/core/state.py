@@ -1,5 +1,6 @@
-from typing import Any, Optional
+from typing import Any
 
+from ..errors import InvalidStateError
 from ..system_states.run_state import _execute_once
 from .context import Context
 from .event import _enque_event
@@ -7,7 +8,7 @@ from .global_env import Global
 
 
 # ステートを書き込む。再実行時は何もしない
-def set_state(g: Global, c: Context, state_name: str, value):
+def set_state(g: Global, c: Context, state_name: str, value: Any) -> None:
     @_execute_once(g, c)
     def a():
         # ステートを書き込み、変更があったら差分イベントを発行する
@@ -23,18 +24,8 @@ def set_state(g: Global, c: Context, state_name: str, value):
     return a()
 
 
-def get_state(g: Global, c: Context, state_name: str, default: Any = None):
-    """ステートを取得する。再実行時はキャッシュする
-
-    Args:
-        g (Global): _description_
-        c (Context): _description_
-        state_name (str): _description_
-        default (Any, optional): _description_. Defaults to None.
-
-    Returns:
-        _type_: _description_
-    """
+def get_state(g: Global, c: Context, state_name: str, default: Any = None) -> Any:
+    """ステートを取得する。再実行時はキャッシュする"""
 
     @_execute_once(g, c)
     def a():
@@ -47,12 +38,12 @@ def add_list_state(
     g: Global,
     c: Context,
     state_name: str,
-    value,
-    max_length: Optional[int] = None,
-):
+    value: Any,
+    max_length: int | None = None,
+) -> None:
     values = get_state(g, c, state_name, default=[])
     if not isinstance(values, list):
-        raise Exception(f"state {state_name} is not list")
+        raise InvalidStateError(f"state {state_name} is not list")
     values = [a for a in values]
     values.append(value)
     if max_length is not None:
@@ -63,12 +54,12 @@ def add_list_state(
 def _add_list_state_raw(
     g: Global,
     state_name: str,
-    value,
-    max_length: Optional[int] = None,
-):
+    value: Any,
+    max_length: int | None = None,
+) -> None:
     values = g.state.read_state(state_name, [])
     if not isinstance(values, list):
-        raise Exception(f"state {state_name} is not list")
+        raise InvalidStateError(f"state {state_name} is not list")
     values.append(value)
     if max_length is not None:
         values = values[-max_length:]

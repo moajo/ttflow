@@ -1,8 +1,9 @@
 import logging
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
+from .constants import STATE_KEY_WORKFLOWS_HASH
 from .core.context import Context
 from .core.event import (
     _enque_event,
@@ -23,6 +24,7 @@ from .core.workflow import (
     sideeffect,
     workflow,
 )
+from .errors import StateLockedError, UnknownRepositoryError
 from .state_repository.buffer_cache_proxy import BufferCacheStateRepositoryProxy
 from .system_states.event_log import _add_event_log
 from .utils import workflow_hash
@@ -56,7 +58,7 @@ def state_trigger(state_name: str) -> Trigger:
 def _lock_state(g: Global):
     if g.state.is_locked():
         logger.info("state is locked. skip run.")
-        raise ValueError("state is locked")
+        raise StateLockedError("state is locked")
     g.state.lock_state()
     try:
         yield
@@ -93,7 +95,7 @@ class Client:
     def __init__(self, _global: Global):
         self._global = _global
 
-    def workflow(self, trigger: Optional[Union[Trigger, str]] = None):
+    def workflow(self, trigger: Trigger | str | None = None):
         return workflow(self._global, trigger)
 
     def sideeffect(self):
@@ -102,7 +104,7 @@ class Client:
     def list_registered_workflows(self):
         return [Workflow(w.trigger, w.f) for w in self._global.workflows]
 
-    def run(self, trigger_name: Optional[str] = None, args: Any = None):
+    def run(self, trigger_name: str | None = None, args: Any = None):
         """
         トリガーに基づいてワークフローを実行します
 
@@ -124,13 +126,13 @@ class Client:
 
         # デプロイイベントの対応
         h = workflow_hash(self._global.workflows)
-        current_hash = self._global.state.read_state("workflows_hash")
+        current_hash = self._global.state.read_state(STATE_KEY_WORKFLOWS_HASH)
         if current_hash != h:
             logger.info(
                 f"workflow is changed from last run. hash: {current_hash} -> {h}"
             )
             _enque_event(self._global, "workflows_changed", None)
-            self._global.state.save_state("workflows_hash", h)
+            self._global.state.save_state(STATE_KEY_WORKFLOWS_HASH, h)
 
         # 未処理イベントをロードする
         load_events_from_state(self._global)
@@ -223,7 +225,7 @@ def setup(
 
         s = OnMemoryStateRepository()
     else:
-        raise Exception("Unknown repository: ", state_repository)
+        raise UnknownRepositoryError(f"Unknown repository: {state_repository}")
 
     return Client(
         Global(

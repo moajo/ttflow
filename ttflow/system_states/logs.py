@@ -1,3 +1,4 @@
+from ..constants import STATE_PREFIX_LOGS
 from ..core.context import Context
 from ..core.global_env import Global
 from ..core.state import get_state
@@ -6,11 +7,11 @@ from ..system_states.run_state import _execute_once
 # ログの実態は単にrun_idに紐づくstateである
 
 
-def _log_key(run_id):
-    return f"_logs:{run_id}"
+def _log_key(run_id: str) -> str:
+    return f"{STATE_PREFIX_LOGS}:{run_id}"
 
 
-def log(g: Global, c: Context, message: str):
+def log(g: Global, c: Context, message: str) -> None:
     @_execute_once(g, c)
     def a():
         processed = f"    [{c.workflow_name}]{message}"
@@ -22,7 +23,7 @@ def log(g: Global, c: Context, message: str):
     return a()
 
 
-def get_logs(g: Global, c: Context):
+def get_logs(g: Global, c: Context) -> list[str]:
     return get_state(g, c, _log_key(c.run_id), [])
 
 

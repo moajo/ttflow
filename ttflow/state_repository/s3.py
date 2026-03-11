@@ -4,6 +4,7 @@ from typing import Any
 import boto3
 from mypy_boto3_s3.client import S3Client
 
+from ..constants import STATE_KEY_SYSTEM_LOCK
 from .base import StateRepository
 
 
@@ -40,7 +41,7 @@ class S3StateRepository(StateRepository):
             return default
 
     def lock_state(self):
-        self.save_state("_system_lock", "locked")
+        self.save_state(STATE_KEY_SYSTEM_LOCK, "locked")
 
     def unlock_state(self):
         client: S3Client = boto3.client("s3")
@@ -52,4 +53,4 @@ class S3StateRepository(StateRepository):
         )
 
     def is_locked(self) -> bool:
-        return self.read_state("_system_lock", default=None) is not None
+        return self.read_state(STATE_KEY_SYSTEM_LOCK, default=None) is not None

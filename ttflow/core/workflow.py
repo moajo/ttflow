@@ -1,8 +1,10 @@
 import functools
 import logging
+from collections.abc import Callable, Generator
 from dataclasses import dataclass
-from typing import Any, Optional, Union
+from typing import Any
 
+from ..errors import SideeffectUsageError, WorkflowDirectCallError
 from ..system_states.completed import add_completed_runs_log, add_failed_runs_log
 from ..system_states.logs import _get_logs
 from ..system_states.run_state import _delete_run_state, _execute_once
@@ -16,14 +18,16 @@ from .trigger import EventTrigger, Trigger
 logger = logging.getLogger(__name__)
 
 
-def _find_workflow(g: Global, workflow_name: str) -> Optional[Workflow]:
+def _find_workflow(g: Global, workflow_name: str) -> Workflow | None:
     for wf in g.workflows:
         if wf.f.__name__ == workflow_name:
             return wf
     return None
 
 
-def _find_event_triggered_workflows(g: Global, event_name: str):
+def _find_event_triggered_workflows(
+    g: Global, event_name: str
+) -> Generator[Workflow, None, None]:
     for wf in g.workflows:
         if isinstance(wf.trigger, EventTrigger) and wf.trigger.event_name == event_name:
             yield wf
@@ -34,7 +38,7 @@ class WorkflowRunResult:
     workflow_name: str
     run_id: str
     status: str  # succeeded, failed, paused
-    error_message: Optional[str]
+    error_message: str | None
     logs: list[str]
 
 
@@ -42,14 +46,6 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
     """workflowを実行する
     中断する場合、paused_workflowsステートにその状態を保存する
     完了したらcompleted_runs_logステートに記録する
-
-    Args:
-        c (Context): _description_
-        wf (Workflow): _description_
-        args (Any): _description_
-
-    Returns:
-        bool: _description_
     """
 
     try:
@@ -95,8 +91,8 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
     # TODO: そのうちワークフロー実行後イベントを実装
 
 
-def workflow(g: Global, trigger: Optional[Union[Trigger, str]] = None):
-    def _decorator(f):
+def workflow(g: Global, trigger: Trigger | str | None = None) -> Callable:
+    def _decorator(f: Callable) -> Callable:
         if trigger is None:
             t = EventTrigger(f"_trigger_{f.__name__}")
         elif isinstance(trigger, str):
@@ -108,19 +104,19 @@ def workflow(g: Global, trigger: Optional[Union[Trigger, str]] = None):
 
         @functools.wraps(f)
         def _wrapper(*args, **kwargs):
-            raise RuntimeError("workflow can not be called directly")
+            raise WorkflowDirectCallError("workflow can not be called directly")
 
         return _wrapper
 
     return _decorator
 
 
-def sideeffect(g: Global):
-    def _decorator(f):
+def sideeffect(g: Global) -> Callable:
+    def _decorator(f: Callable) -> Callable:
         @functools.wraps(f)
         def _wrapper(*args, **kwargs):
             if len(args) == 0 or not isinstance(args[0], RunContext):
-                raise RuntimeError(
+                raise SideeffectUsageError(
                     "sideeffectはRunContextを第1引数に取る必要があります"
                 )
             c = args[0]

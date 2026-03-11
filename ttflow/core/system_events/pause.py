@@ -1,6 +1,6 @@
 import time
 from dataclasses import asdict, dataclass
-from typing import Any, Optional
+from typing import Any
 
 from dacite import from_dict
 
@@ -10,9 +10,7 @@ from ..global_env import Global
 # _pause イベントは、ワークフローの中断を表すイベントです。
 # 中断されたワークフローは、即時ではなく次回の実行まで待機します。
 
-
-def _event_name():
-    return "_pause"
+SYSTEM_EVENT_PAUSE = "_pause"
 
 
 @dataclass
@@ -30,10 +28,10 @@ def _enque_pause_event(
     run_id: str,
     pause_id: str,
     args: Any,
-):
+) -> None:
     _enque_event(
         g,
-        event_name=_event_name(),
+        event_name=SYSTEM_EVENT_PAUSE,
         args=asdict(
             PauseEvent(
                 workflow_name=workflow_name,
@@ -47,7 +45,7 @@ def _enque_pause_event(
     )
 
 
-def try_parse_pause_event(event_raw: Event) -> Optional[PauseEvent]:
-    if event_raw.event_name != _event_name():
+def try_parse_pause_event(event_raw: Event) -> PauseEvent | None:
+    if event_raw.event_name != SYSTEM_EVENT_PAUSE:
         return None
     return from_dict(data_class=PauseEvent, data=event_raw.args)
