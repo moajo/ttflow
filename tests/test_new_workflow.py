@@ -125,6 +125,7 @@ class TestWorkflowRunResult:
         results = client.run("wf")
         r = results[0]
         assert r.status == "failed"
+        assert r.error_message is not None
         assert "ValueError" in r.error_message
         assert "something went wrong" in r.error_message
 
@@ -165,6 +166,7 @@ class TestDirectCallPrevention:
 
         results = client.run("wf1")
         assert results[0].status == "failed"
+        assert results[0].error_message is not None
         assert "WorkflowDirectCallError" in results[0].error_message
 
 

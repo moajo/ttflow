@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import inspect
 import logging
@@ -8,7 +9,11 @@ from typing import Any
 from ..errors import SideeffectUsageError, WorkflowDirectCallError
 from ..system_states.completed import add_completed_runs_log, add_failed_runs_log
 from ..system_states.logs import _get_logs
-from ..system_states.run_state import _delete_run_state, _execute_once
+from ..system_states.run_state import (
+    _delete_run_state,
+    _execute_once,
+    _execute_once_async,
+)
 from .context import Context
 from .global_env import Global, Workflow
 from .pause import PauseException
@@ -43,6 +48,23 @@ class WorkflowRunResult:
     logs: list[str]
 
 
+def _call_workflow_func(wf: Workflow, g: Global, c: Context, args: Any):
+    """ワークフロー関数を呼び出す。asyncの場合はasyncio.run()で実行する"""
+    params = inspect.signature(wf.f).parameters
+    if inspect.iscoroutinefunction(wf.f):
+        # asyncワークフロー
+        if len(params) >= 2:
+            asyncio.run(wf.f(RunContext(g, c), args))
+        else:
+            asyncio.run(wf.f(RunContext(g, c)))
+    else:
+        # syncワークフロー
+        if len(params) >= 2:
+            wf.f(RunContext(g, c), args)
+        else:
+            wf.f(RunContext(g, c))
+
+
 def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRunResult:
     """workflowを実行する
     中断する場合、paused_workflowsステートにその状態を保存する
@@ -50,12 +72,7 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
     """
 
     try:
-        # ワークフロー関数の第2引数(args)は省略可能
-        params = inspect.signature(wf.f).parameters
-        if len(params) >= 2:
-            wf.f(RunContext(g, c), args)
-        else:
-            wf.f(RunContext(g, c))
+        _call_workflow_func(wf, g, c, args)
     except PauseException as e:
         logger.info("ワークフローを中断します")
         _enque_pause_event(
@@ -118,20 +135,49 @@ def workflow(g: Global, trigger: Trigger | str | None = None) -> Callable:
 
 def sideeffect(g: Global) -> Callable:
     def _decorator(f: Callable) -> Callable:
-        @functools.wraps(f)
-        def _wrapper(*args, **kwargs):
-            if len(args) == 0 or not isinstance(args[0], RunContext):
-                raise SideeffectUsageError(
-                    "sideeffectはRunContextを第1引数に取る必要があります"
-                )
-            c = args[0]
+        if inspect.iscoroutinefunction(f):
+            # async sideeffect: syncワークフローからの呼び出しを検出するため、
+            # 通常の関数でラップし、実行中イベントループの有無で判定する
+            @functools.wraps(f)
+            def _async_guard(*args, **kwargs):
+                try:
+                    asyncio.get_running_loop()
+                except RuntimeError:
+                    raise SideeffectUsageError(
+                        "async sideeffectはasyncワークフローからのみ呼び出せます"
+                    )
+                return _async_impl(*args, **kwargs)
 
-            @_execute_once(g, c.get_context_data())
-            def a():
-                return f(*args, **kwargs)
+            async def _async_impl(*args, **kwargs):
+                if len(args) == 0 or not isinstance(args[0], RunContext):
+                    raise SideeffectUsageError(
+                        "sideeffectはRunContextを第1引数に取る必要があります"
+                    )
+                c = args[0]
 
-            return a()
+                @_execute_once_async(g, c.get_context_data())
+                async def a():
+                    return await f(*args, **kwargs)
 
-        return _wrapper
+                return await a()
+
+            return _async_guard
+        else:
+            # sync sideeffect
+            @functools.wraps(f)
+            def _wrapper(*args, **kwargs):
+                if len(args) == 0 or not isinstance(args[0], RunContext):
+                    raise SideeffectUsageError(
+                        "sideeffectはRunContextを第1引数に取る必要があります"
+                    )
+                c = args[0]
+
+                @_execute_once(g, c.get_context_data())
+                def a():
+                    return f(*args, **kwargs)
+
+                return a()
+
+            return _wrapper
 
     return _decorator
