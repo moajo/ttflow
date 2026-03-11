@@ -23,3 +23,13 @@ fmt:
 lint:
 	uv run ruff check .
 	uv run ruff format --check .
+
+# Serve docs locally with live reload
+.PHONY: docs
+docs:
+	uv run --group docs mkdocs serve
+
+# Build docs for deployment
+.PHONY: docs-build
+docs-build:
+	uv run --group docs mkdocs build --strict
