@@ -1,5 +1,7 @@
 # ttflow
 
+[![codecov](https://codecov.io/gh/moajo/ttflow/graph/badge.svg)](https://codecov.io/gh/moajo/ttflow)
+
 軽量なPythonワークフローエンジンです。
 
 ペライチのPythonスクリプトがそのままワークフローエンジンとして動きます。
