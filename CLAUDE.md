@@ -62,6 +62,7 @@ uv run pytest -m network
 - パッケージ管理: uv
 - フォーマッタ/リンタ: ruff
 - テストには`@pytest.mark.network`マーカーでネットワーク依存テストを分離
+- **コード変更後は必ず `make fmt` と `make lint` を実行し、エラーがない状態にすること**（CIで同じチェックが走る）
 
 ## ドキュメント運用
 
