@@ -94,7 +94,6 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
         error_message=None,
         logs=_get_logs(g, c.run_id),
     )
-    # TODO: そのうちワークフロー実行後イベントを実装
 
 
 def workflow(g: Global, trigger: Trigger | str | None = None) -> Callable:
