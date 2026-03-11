@@ -1,0 +1,66 @@
+site_name: ttflow
+site_description: 軽量なPythonワークフローエンジン
+repo_url: https://github.com/moajo/ttflow
+repo_name: moajo/ttflow
+
+theme:
+  name: material
+  language: ja
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: ダークモードに切り替え
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: ライトモードに切り替え
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            heading_level: 2
+            docstring_style: google
+            merge_init_into_class: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+
+nav:
+  - Home: index.md
+  - ガイド:
+      - イベントシステム: guide/events.md
+      - StateRepository: guide/state_repository.md
+  - API リファレンス:
+      - ttflow: api/ttflow.md
+      - Client: api/client.md
+      - RunContext: api/run_context.md
+      - ワークフロー: api/workflow.md
+      - 状態管理: api/state.md
+      - Pause/Resume: api/pause.md
+      - StateRepository: api/state_repository.md
+      - Powerup: api/powerup.md
+      - エラー: api/errors.md
