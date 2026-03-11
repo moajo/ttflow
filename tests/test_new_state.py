@@ -1,6 +1,5 @@
 """get_state / set_state / add_list_state に関するテスト"""
 
-
 from ttflow import Client, RunContext
 
 
