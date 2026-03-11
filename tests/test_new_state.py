@@ -1,9 +1,7 @@
 """get_state / set_state / add_list_state に関するテスト"""
 
-import pytest
 
 from ttflow import Client, RunContext
-from ttflow.errors import InvalidStateError
 
 
 class TestSetState:

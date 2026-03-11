@@ -50,7 +50,7 @@ class TestCompletedRunsLog:
         client.run("wf1")
         client.run("wf2")
         logs = _get_completed_runs_log(client._global)
-        names = [l["workflow_name"] for l in logs]
+        names = [entry["workflow_name"] for entry in logs]
         assert "wf1" in names
         assert "wf2" in names
 
@@ -67,7 +67,7 @@ class TestEventLog:
         logs = _get_event_logs(client._global)
         # _trigger_wfはシステムイベントなのでログには記録されない
         # workflows_changedは記録される
-        event_names = [l["event_name"] for l in logs]
+        event_names = [entry["event_name"] for entry in logs]
         assert "workflows_changed" in event_names
 
     def test_システムイベントはログに記録されない(self, client: Client):
@@ -79,8 +79,8 @@ class TestEventLog:
 
         client.run("wf")
         logs = _get_event_logs(client._global)
-        for l in logs:
-            assert not l["event_name"].startswith("_")
+        for entry in logs:
+            assert not entry["event_name"].startswith("_")
 
 
 class TestWorkflowLogs:

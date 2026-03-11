@@ -3,7 +3,6 @@
 import pytest
 
 from ttflow import Client, RunContext
-from ttflow.core import _enque_event
 from ttflow.errors import SideeffectUsageError
 
 

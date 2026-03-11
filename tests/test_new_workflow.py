@@ -6,7 +6,6 @@ from ttflow import Client, RunContext, event_trigger, every_trigger, state_trigg
 from ttflow.core import _enque_event
 from ttflow.errors import WorkflowDirectCallError
 
-
 # --- トリガーの指定方法 ---
 
 

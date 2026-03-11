@@ -2,11 +2,11 @@
 
 import pytest
 
-from ttflow import Client, RunContext, setup
+from ttflow import Client, RunContext
+from ttflow.core.global_env import Global
 from ttflow.errors import StateLockedError
 from ttflow.state_repository.base import StateRepository
 from ttflow.state_repository.buffer_cache_proxy import BufferCacheStateRepositoryProxy
-from ttflow.core.global_env import Global
 
 
 class LockableMemoryRepository(StateRepository):
