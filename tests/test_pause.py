@@ -147,6 +147,52 @@ def test_中断イベントは永続化される():
     ]
 
 
-# TODO: 実装
-# def test_中断機能が正しく動くこと_2重実行ケース():
-#     s = OnMemoryS
+def test_中断機能が正しく動くこと_2重実行ケース(client: Client):
+    """中断中のワークフローがある状態で同じトリガーが再度発火した場合、
+    それぞれ独立したrun_idで並行して動作すること"""
+    _define_workflow_for_test(client)
+    s = client._global.state
+
+    # 1回目のトリガー → 中断する
+    results1 = client.run("デプロイCD", {"値": "first"})
+    assert len(results1) == 1
+    assert results1[0].status == "paused"
+    run_id_1 = results1[0].run_id
+
+    # 2回目のトリガー → 1回目が中断したまま再度トリガー
+    results2 = client.run("デプロイCD", {"値": "second"})
+    # 新規トリガーが先に処理され、その後中断再開が処理される = 2件
+    assert len(results2) == 2
+    # 新規トリガーによる2回目の実行（中断）
+    assert results2[0].status == "paused"
+    run_id_2 = results2[0].run_id
+    assert run_id_1 != run_id_2
+    # 1回目の再開（承認イベントがないのでまた中断）
+    assert results2[1].status == "paused"
+    assert results2[1].run_id == run_id_1
+
+    # CD開始回数: 1回目で1に設定済み（再開時はスキップ）、2回目で2に設定
+    assert s.read_state("CD開始回数") == 2
+
+    # 1回目を承認
+    _enque_event(client._global, f"承認:{run_id_1}", None)
+    results3 = client.run()
+    # 1回目が完了、2回目は再開するがまた中断 = 2件
+    assert len(results3) == 2
+    completed = [r for r in results3 if r.status == "succeeded"]
+    paused = [r for r in results3 if r.status == "paused"]
+    assert len(completed) == 1
+    assert completed[0].run_id == run_id_1
+    assert len(paused) == 1
+    assert paused[0].run_id == run_id_2
+
+    assert s.read_state("CD完了回数") == 1
+
+    # 2回目を承認
+    _enque_event(client._global, f"承認:{run_id_2}", None)
+    results4 = client.run()
+    completed = [r for r in results4 if r.status == "succeeded"]
+    assert len(completed) == 1
+    assert completed[0].run_id == run_id_2
+
+    assert s.read_state("CD完了回数") == 2

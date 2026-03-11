@@ -22,7 +22,7 @@ def _define_workflow_for_test_2(client: Client):
     "definer",
     [
         _define_workflow_for_test_1,
-        # _define_workflow_for_test_2, # TODO: 対応する
+        _define_workflow_for_test_2,
     ],
 )
 def test_イベントトリガー_表記方法のテスト(definer, client: Client):

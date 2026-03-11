@@ -14,7 +14,6 @@ def _define_workflow(ttflow: Client):
     @ttflow.workflow(trigger=event_trigger("workflows_changed"))
     def ワークフロー更新(c: RunContext, args: dict):
         c.log("ワークフローのデプロイイベントが発生したよ")
-        c.log("ワークフローのデプロイイベントが発生したよ")
         count = c.get_state("デプロイ回数")
         if count is None:
             count = 0

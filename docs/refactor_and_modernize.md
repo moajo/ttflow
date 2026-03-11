@@ -6,13 +6,12 @@ Phase 1〜4 は完了済み。以下は残りの作業。
 
 ## Phase 5: 未実装・不完全な箇所の対応
 
-| 箇所 | 状況 |
-|---|---|
-| `dynamodb.py` `clear_state()` | `pass # TODO: implement` のまま |
-| `workflow.py:95` | ワークフロー実行後イベント未実装 |
-| `tests/test_pause.py:150` | `# TODO: 実装` でテスト未完成 |
-| `tests/test_notations.py:24` | `# TODO: 対応する` でテスト無効化 |
-| `cli.py` | ほぼ空（7行） |
+| 箇所                          | 状況                              |
+| ----------------------------- | --------------------------------- |
+| `dynamodb.py` `clear_state()` | `pass # TODO: implement` のまま   |
+| `workflow.py:95`              | ワークフロー実行後イベント未実装  |
+| `tests/test_notations.py:24`  | `# TODO: 対応する` でテスト無効化 |
+| `cli.py`                      | ほぼ空（7行）                     |
 
 ---
 

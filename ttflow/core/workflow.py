@@ -1,4 +1,5 @@
 import functools
+import inspect
 import logging
 from collections.abc import Callable, Generator
 from dataclasses import dataclass
@@ -49,7 +50,12 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
     """
 
     try:
-        wf.f(RunContext(g, c), args)
+        # ワークフロー関数の第2引数(args)は省略可能
+        params = inspect.signature(wf.f).parameters
+        if len(params) >= 2:
+            wf.f(RunContext(g, c), args)
+        else:
+            wf.f(RunContext(g, c))
     except PauseException as e:
         logger.info("ワークフローを中断します")
         _enque_pause_event(
