@@ -2,7 +2,7 @@
 name = "ttflow"
 version = "0.5.8"
 description = "simple workflow engine"
-authors = [{ name = "moajo", email = "mimirosiasd@gmail.com" }]
+authors = [{ name = "moajo", email = "moajodev@gmail.com" }]
 requires-python = ">=3.11"
 dependencies = [
     "fire>=0.5.0",
