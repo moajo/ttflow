@@ -3,6 +3,17 @@ resource "aws_s3_bucket" "ttflow" {
   bucket = var.s3_bucket_name
 }
 
+# ACLを無効化し、バケットオーナーが全オブジェクトの所有者となる設定。
+# 2023年4月以降に作成されたS3バケットではデフォルトでこの挙動だが、
+# Terraformで明示的に設定しないとdriftが発生する可能性があるため定義しておく。
+resource "aws_s3_bucket_ownership_controls" "ttflow" {
+  bucket = aws_s3_bucket.ttflow.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
 # Lambda関数
 module "lambda" {
   source  = "terraform-aws-modules/lambda/aws"
