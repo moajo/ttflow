@@ -49,14 +49,7 @@ module "lambda" {
   timeout     = var.timeout
   memory_size = var.memory_size
 
-  # pip_requirements=falseで、srcディレクトリ内のrequirements.txtによる
-  # 自動pip installを抑制する。依存はLayerで提供するため、ここでは.pyのみ含める。
-  source_path = [
-    {
-      path             = var.source_path
-      pip_requirements = false
-    }
-  ]
+  source_path = var.source_path
 
   layers = [
     module.dependencies_layer.lambda_layer_arn,
