@@ -26,6 +26,7 @@ module "dependencies_layer" {
 
   layer_name          = "${var.function_name}-dependencies"
   compatible_runtimes = [var.runtime]
+  runtime             = var.runtime
 
   source_path = [
     {
