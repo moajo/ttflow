@@ -1,6 +1,6 @@
 [project]
 name = "ttflow"
-version = "0.5.8"
+dynamic = ["version"]
 description = "simple workflow engine"
 authors = [{ name = "moajo", email = "moajodev@gmail.com" }]
 requires-python = ">=3.11"
@@ -18,8 +18,11 @@ web = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [dependency-groups]
 dev = [
