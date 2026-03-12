@@ -35,7 +35,12 @@ variable "memory_size" {
 }
 
 variable "source_path" {
-  description = "Lambdaデプロイパッケージのパス"
+  description = "ワークフロー.pyファイルが置かれたディレクトリのパス"
+  type        = string
+}
+
+variable "pip_requirements_path" {
+  description = "依存ライブラリのrequirements.txtのパス（Lambda Layerとしてビルドされる）"
   type        = string
 }
 
