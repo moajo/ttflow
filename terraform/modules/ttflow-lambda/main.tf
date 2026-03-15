@@ -14,29 +14,7 @@ resource "aws_s3_bucket_ownership_controls" "ttflow" {
   }
 }
 
-# 依存ライブラリ用Lambda Layer
-# ttflow本体 + ユーザー指定の依存をまとめてLayerにする。
-# ワークフロー.pyの変更時にはLayerの再ビルドは不要で、Lambda関数のみ更新される。
-module "dependencies_layer" {
-  source  = "terraform-aws-modules/lambda/aws"
-  version = "~> 7.0"
-
-  create_function = false
-  create_layer    = true
-
-  layer_name          = "${var.function_name}-dependencies"
-  compatible_runtimes = [var.runtime]
-  runtime             = var.runtime
-
-  source_path = [
-    {
-      pip_requirements = var.pip_requirements_path
-      prefix           = "python"
-    }
-  ]
-}
-
-# Lambda関数（ワークフローの.pyファイルのみ含む）
+# Lambda関数
 module "lambda" {
   source  = "terraform-aws-modules/lambda/aws"
   version = "~> 7.0"
@@ -50,10 +28,6 @@ module "lambda" {
   memory_size = var.memory_size
 
   source_path = var.source_path
-
-  layers = [
-    module.dependencies_layer.lambda_layer_arn,
-  ]
 
   environment_variables = var.environment_variables
 

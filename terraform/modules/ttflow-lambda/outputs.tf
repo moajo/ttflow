@@ -13,11 +13,6 @@ output "lambda_function_url" {
   value       = try(module.lambda.lambda_function_url, null)
 }
 
-output "lambda_layer_arn" {
-  description = "依存ライブラリ用Lambda LayerのARN"
-  value       = module.dependencies_layer.lambda_layer_arn
-}
-
 output "s3_bucket_name" {
   description = "状態保存用S3バケット名"
   value       = aws_s3_bucket.ttflow.id
