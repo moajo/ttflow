@@ -183,6 +183,151 @@
         .toast-success { background: #dcfce7; color: var(--success); border: 1px solid #bbf7d0; }
         .toast-error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
 
+        /* タブナビゲーション */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 0.6rem 1.25rem;
+            border: none;
+            background: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* イベントフロー */
+        .flow-item {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .flow-event-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-arrow {
+            color: var(--text-muted);
+            margin: 0 0.4rem;
+        }
+
+        .flow-workflow-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-workflow-tag {
+            background: #eff6ff;
+            color: var(--primary);
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .flow-recent {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* 状態遷移 */
+        .transition-item {
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .transition-state-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            color: var(--warning);
+        }
+
+        .transition-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.85rem;
+        }
+
+        .transition-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            min-width: 5rem;
+        }
+
+        /* タイムライン */
+        .timeline-group {
+            margin-bottom: 1rem;
+        }
+
+        .timeline-group-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .timeline-bar-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: 0.25rem;
+        }
+
+        .timeline-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .timeline-dot.success { background: var(--success); }
+        .timeline-dot.failed { background: var(--danger); }
+        .timeline-dot.paused { background: var(--paused); }
+
+        .timeline-dot:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
         @media (max-width: 768px) {
             .grid { grid-template-columns: 1fr; }
             .card.full-width { grid-column: 1; }
@@ -208,51 +353,90 @@
 </header>
 
 <main>
-    <div class="grid">
-        <!-- ワークフロー一覧 -->
-        <div class="card">
-            <h2>Workflows</h2>
-            <table>
-                <thead><tr><th>Name</th><th>Trigger</th><th>Action</th></tr></thead>
-                <tbody id="workflows-body"></tbody>
-            </table>
-            <div class="trigger-form">
-                <input type="text" id="trigger-name" placeholder="trigger name">
-                <button class="btn" onclick="manualTrigger()">Trigger</button>
+    <!-- タブナビゲーション -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('overview')">Overview</button>
+        <button class="tab-btn" onclick="switchTab('event-flow')">Event Flow</button>
+        <button class="tab-btn" onclick="switchTab('state-transitions')">State Transitions</button>
+        <button class="tab-btn" onclick="switchTab('timeline')">Timeline</button>
+    </div>
+
+    <!-- Overview タブ -->
+    <div class="tab-content active" id="tab-overview">
+        <div class="grid">
+            <div class="card">
+                <h2>Workflows</h2>
+                <table>
+                    <thead><tr><th>Name</th><th>Trigger</th><th>Action</th></tr></thead>
+                    <tbody id="workflows-body"></tbody>
+                </table>
+                <div class="trigger-form">
+                    <input type="text" id="trigger-name" placeholder="trigger name">
+                    <button class="btn" onclick="manualTrigger()">Trigger</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Paused Workflows</h2>
+                <table>
+                    <thead><tr><th>Workflow</th><th>Run ID</th><th>Paused At</th><th>Action</th></tr></thead>
+                    <tbody id="paused-body"></tbody>
+                </table>
+            </div>
+
+            <div class="card full-width">
+                <h2>Execution History</h2>
+                <table>
+                    <thead><tr><th>Workflow</th><th>Run ID</th><th>Status</th><th>Timestamp</th><th>Logs</th></tr></thead>
+                    <tbody id="runs-body"></tbody>
+                </table>
+            </div>
+
+            <div class="card full-width">
+                <h2>Event History</h2>
+                <table>
+                    <thead><tr><th>Event</th><th>Args</th><th>Timestamp</th></tr></thead>
+                    <tbody id="events-body"></tbody>
+                </table>
+            </div>
+
+            <div class="card full-width" id="logs-card" style="display:none;">
+                <h2>Run Logs <span id="logs-run-id" style="font-weight:400; font-size:0.85rem; color:#666;"></span></h2>
+                <div class="logs-panel" id="logs-panel"></div>
             </div>
         </div>
+    </div>
 
-        <!-- 中断中ワークフロー -->
+    <!-- Event Flow タブ -->
+    <div class="tab-content" id="tab-event-flow">
         <div class="card">
-            <h2>Paused Workflows</h2>
-            <table>
-                <thead><tr><th>Workflow</th><th>Run ID</th><th>Paused At</th><th>Action</th></tr></thead>
-                <tbody id="paused-body"></tbody>
-            </table>
+            <h2>Event Flow</h2>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                イベントとそれによって発火するワークフローの関係
+            </p>
+            <div id="event-flow-container"></div>
         </div>
+    </div>
 
-        <!-- 実行履歴 -->
-        <div class="card full-width">
-            <h2>Execution History</h2>
-            <table>
-                <thead><tr><th>Workflow</th><th>Run ID</th><th>Status</th><th>Timestamp</th><th>Logs</th></tr></thead>
-                <tbody id="runs-body"></tbody>
-            </table>
+    <!-- State Transitions タブ -->
+    <div class="tab-content" id="tab-state-transitions">
+        <div class="card">
+            <h2>State Transitions</h2>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                ステート変更によるワークフロー連鎖（Producer → State → Consumer）
+            </p>
+            <div id="state-transitions-container"></div>
         </div>
+    </div>
 
-        <!-- イベント履歴 -->
-        <div class="card full-width">
-            <h2>Event History</h2>
-            <table>
-                <thead><tr><th>Event</th><th>Args</th><th>Timestamp</th></tr></thead>
-                <tbody id="events-body"></tbody>
-            </table>
-        </div>
-
-        <!-- ログ表示 -->
-        <div class="card full-width" id="logs-card" style="display:none;">
-            <h2>Run Logs <span id="logs-run-id" style="font-weight:400; font-size:0.85rem; color:#666;"></span></h2>
-            <div class="logs-panel" id="logs-panel"></div>
+    <!-- Timeline タブ -->
+    <div class="tab-content" id="tab-timeline">
+        <div class="card">
+            <h2>Execution Timeline</h2>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">
+                ワークフロー別の実行履歴（最新50件）
+            </p>
+            <div id="timeline-container"></div>
         </div>
     </div>
 </main>
@@ -291,6 +475,32 @@ function triggerName(trigger) {
     return name;
 }
 
+function displayEventName(name) {
+    if (name.startsWith("_trigger_")) return name.substring(9);
+    if (name === "_every") return "every run";
+    if (name.startsWith("state_changed_")) return "state:" + name.substring(14);
+    return name;
+}
+
+function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+}
+
+// --- タブ切り替え ---
+function switchTab(tabName) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    document.getElementById("tab-" + tabName).classList.add("active");
+    document.querySelector(`.tab-btn[onclick="switchTab('${tabName}')"]`).classList.add("active");
+
+    if (tabName === "event-flow") fetchEventFlow();
+    if (tabName === "state-transitions") fetchStateTransitions();
+    if (tabName === "timeline") fetchTimeline();
+}
+
+// --- Overview ---
 async function fetchWorkflows() {
     const res = await fetch(API + "/api/workflows");
     const data = await res.json();
@@ -389,12 +599,127 @@ async function showLogs(runId) {
     card.scrollIntoView({ behavior: "smooth" });
 }
 
-function escapeHtml(s) {
-    const div = document.createElement("div");
-    div.textContent = s;
-    return div.innerHTML;
+// --- Event Flow ---
+async function fetchEventFlow() {
+    const res = await fetch(API + "/api/visualization/event-flow");
+    const data = await res.json();
+    const container = document.getElementById("event-flow-container");
+
+    if (data.flows.length === 0) {
+        container.innerHTML = '<div class="empty">No event flows</div>';
+        return;
+    }
+
+    container.innerHTML = data.flows.map(flow => {
+        const workflows = flow.registered_workflows.length > 0
+            ? flow.registered_workflows.map(w => `<span class="flow-workflow-tag">${w}</span>`).join("")
+            : '<span style="color:var(--text-muted); font-size:0.8rem;">no registered workflows</span>';
+
+        const recent = flow.recent_executions.slice(-5).reverse();
+        const recentHtml = recent.length > 0
+            ? `<div class="flow-recent">
+                Recent: ${recent.map(r => {
+                    const cls = r.status === "succeeded" ? "badge-success" : r.status === "failed" ? "badge-failed" : "badge-paused";
+                    return `<span class="badge ${cls}" title="${r.workflow_name} @ ${formatTime(r.timestamp)}">${r.workflow_name}</span>`;
+                }).join(" ")}
+               </div>`
+            : '';
+
+        return `
+            <div class="flow-item">
+                <div class="flow-event-name">
+                    <code>${displayEventName(flow.event_name)}</code>
+                    <span class="flow-arrow">&rarr;</span>
+                </div>
+                <div class="flow-workflow-list">${workflows}</div>
+                ${recentHtml}
+            </div>`;
+    }).join("");
 }
 
+// --- State Transitions ---
+async function fetchStateTransitions() {
+    const res = await fetch(API + "/api/visualization/state-transitions");
+    const data = await res.json();
+    const container = document.getElementById("state-transitions-container");
+
+    if (data.transitions.length === 0) {
+        container.innerHTML = '<div class="empty">No state transitions detected</div>';
+        return;
+    }
+
+    container.innerHTML = data.transitions.map(t => {
+        const producers = t.producers.length > 0
+            ? t.producers.map(p => `<span class="flow-workflow-tag">${p}</span>`).join(" ")
+            : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>';
+        const consumers = t.consumers.length > 0
+            ? t.consumers.map(c => `<span class="flow-workflow-tag">${c}</span>`).join(" ")
+            : '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>';
+
+        const changes = t.recent_changes.slice(-5).reverse();
+        const changesHtml = changes.length > 0
+            ? `<div style="margin-top:0.5rem; font-size:0.8rem; color:var(--text-muted);">
+                Recent changes:
+                <table style="margin-top:0.25rem;">
+                    <tr><th>Workflow</th><th>Value</th><th>Time</th></tr>
+                    ${changes.map(c => `
+                        <tr>
+                            <td>${c.workflow_name}</td>
+                            <td><code>${JSON.stringify(c.new_value)}</code></td>
+                            <td class="timestamp">${formatTime(c.timestamp)}</td>
+                        </tr>
+                    `).join("")}
+                </table>
+               </div>`
+            : '';
+
+        return `
+            <div class="transition-item">
+                <div class="transition-state-name"><code>${t.state_name}</code></div>
+                <div class="transition-row">
+                    <span class="transition-label">Producers</span>
+                    ${producers}
+                </div>
+                <div class="transition-row">
+                    <span class="transition-label">Consumers</span>
+                    ${consumers}
+                </div>
+                ${changesHtml}
+            </div>`;
+    }).join("");
+}
+
+// --- Timeline ---
+async function fetchTimeline() {
+    const res = await fetch(API + "/api/visualization/timeline");
+    const data = await res.json();
+    const container = document.getElementById("timeline-container");
+    const workflows = data.workflows;
+    const names = Object.keys(workflows);
+
+    if (names.length === 0) {
+        container.innerHTML = '<div class="empty">No execution history</div>';
+        return;
+    }
+
+    container.innerHTML = names.map(name => {
+        const runs = workflows[name].slice().reverse().slice(0, 50);
+        const dots = runs.map(r => {
+            const status = r.status === "success" ? "success" : r.status === "failed" ? "failed" : "paused";
+            const trigger = r.triggered_by ? displayEventName(r.triggered_by) : "?";
+            const tooltip = `${status} | ${trigger} | ${formatTime(r.timestamp)}`;
+            return `<div class="timeline-dot ${status}" data-tooltip="${tooltip}" onclick="showLogs('${r.run_id}')"></div>`;
+        }).join("");
+
+        return `
+            <div class="timeline-group">
+                <div class="timeline-group-name">${name}</div>
+                <div class="timeline-bar-container">${dots}</div>
+            </div>`;
+    }).join("");
+}
+
+// --- Actions ---
 async function triggerWorkflow(name) {
     try {
         const res = await fetch(API + "/api/trigger/" + name, { method: "POST" });
@@ -425,8 +750,14 @@ async function resumeWorkflow(name) {
     }
 }
 
+// --- Refresh ---
 async function refreshAll() {
     await Promise.all([fetchWorkflows(), fetchStatus(), fetchRuns(), fetchEvents()]);
+    // アクティブな可視化タブも更新
+    const activeTab = document.querySelector(".tab-content.active");
+    if (activeTab.id === "tab-event-flow") fetchEventFlow();
+    if (activeTab.id === "tab-state-transitions") fetchStateTransitions();
+    if (activeTab.id === "tab-timeline") fetchTimeline();
 }
 
 function setupAutoRefresh() {

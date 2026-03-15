@@ -27,6 +27,7 @@ from .core.workflow import (
 from .errors import StateLockedError, UnknownRepositoryError
 from .state_repository.buffer_cache_proxy import BufferCacheStateRepositoryProxy
 from .system_states.event_log import _add_event_log
+from .system_states.execution_trace import ExecutionTraceRecorder, save_execution_trace
 from .utils import workflow_hash
 
 logger = logging.getLogger(__name__)
@@ -116,10 +117,14 @@ class Client:
             _enque_trigger(self._global, trigger_name, args)
         with _lock_state(self._global):
             with self._global.state.buffering():
-                return self.__run()
+                return self.__run(trigger_name)
 
-    def __run(self) -> list[WorkflowRunResult]:
+    def __run(self, trigger_name: str | None = None) -> list[WorkflowRunResult]:
         logger.info("check registered workflows")
+
+        # トレース記録を開始
+        recorder = ExecutionTraceRecorder(trigger_name)
+        self._global.trace_recorder = recorder
 
         # 毎回実行するイベントを追加
         _enque_every_event(self._global)
@@ -154,9 +159,11 @@ class Client:
                     logger.info(f"workflow '{wf.f.__name__}' resuming")
                     print()
                     print(f"{wf.f.__name__}: 中断した点から再開します")
-                    workflow_run_results.append(
-                        exec_workflow(self._global, c, wf, args["args"])
+                    result = exec_workflow(self._global, c, wf, args["args"])
+                    recorder.record_workflow_execution(
+                        wf.f.__name__, c.run_id, result.status, "_pause"
                     )
+                    workflow_run_results.append(result)
             elif event_name.startswith("_"):
                 logger.info(f"processing system event '{event_name}'")
                 for wf in _find_event_triggered_workflows(self._global, event_name):
@@ -164,9 +171,11 @@ class Client:
                     print()
                     print(f"{wf.f.__name__}: イベント'{event_name}'により実行されます")
                     c = Context(wf.f.__name__)
-                    workflow_run_results.append(
-                        exec_workflow(self._global, c, wf, args)
+                    result = exec_workflow(self._global, c, wf, args)
+                    recorder.record_workflow_execution(
+                        wf.f.__name__, c.run_id, result.status, event_name
                     )
+                    workflow_run_results.append(result)
             else:
                 logger.info(f"processing event '{event_name}'")
                 print(f"イベント[{event_name}]が発生しました")
@@ -182,11 +191,17 @@ class Client:
                         f"run workflow '{wf.f.__name__}' triggered by event '{event_name}'"
                     )
                     c = Context(wf.f.__name__)
-                    workflow_run_results.append(
-                        exec_workflow(self._global, c, wf, args)
+                    result = exec_workflow(self._global, c, wf, args)
+                    recorder.record_workflow_execution(
+                        wf.f.__name__, c.run_id, result.status, event_name
                     )
+                    workflow_run_results.append(result)
 
         logger.info("do post processes")
+        # トレースを永続化
+        save_execution_trace(self._global, recorder.get_trace())
+        self._global.trace_recorder = None
+
         # eventを永続化してメモリ上から消す
         flush_events_for_next_run_to_state(self._global)
         self._global.purge_events()

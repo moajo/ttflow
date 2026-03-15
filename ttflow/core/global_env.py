@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..state_repository.buffer_cache_proxy import BufferCacheStateRepositoryProxy
 from .trigger import Trigger
+
+if TYPE_CHECKING:
+    from ..system_states.execution_trace import ExecutionTraceRecorder
 
 
 @dataclass
@@ -38,6 +43,9 @@ class Global:
 
         # 実行中にエンキューされたイベント。
         self.events_for_next_run: list[Event] = []
+
+        # 実行トレース記録用（__run中のみ設定される）
+        self.trace_recorder: ExecutionTraceRecorder | None = None
 
     def purge_events(self) -> None:
         self.events = []
