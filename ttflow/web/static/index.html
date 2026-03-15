@@ -303,7 +303,7 @@ async function fetchWorkflows() {
         <tr>
             <td><strong>${wf.name}</strong>${wf.description ? '<br><small style="color:#666">' + wf.description + '</small>' : ''}</td>
             <td><code>${triggerName(wf.trigger)}</code></td>
-            <td><button class="btn btn-sm btn-outline" onclick="triggerWorkflow('${wf.name}')">Run</button></td>
+            <td><button class="btn btn-sm btn-outline" onclick="triggerWorkflow('${triggerName(wf.trigger)}')">Run</button></td>
         </tr>
     `).join("");
 }
