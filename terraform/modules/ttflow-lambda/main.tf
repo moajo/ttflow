@@ -17,7 +17,7 @@ resource "aws_s3_bucket_ownership_controls" "ttflow" {
 # Lambda関数
 module "lambda" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "~> 7.0"
+  version = "~> 8.0"
 
   function_name = var.function_name
   description   = var.description
