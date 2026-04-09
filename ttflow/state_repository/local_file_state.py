@@ -19,6 +19,17 @@ class LocalFileStateRepository(StateRepository):
         with open(self.state_file, "w") as f:
             json.dump(state, f, sort_keys=True, ensure_ascii=False, indent=2)
 
+    def delete_state(self, name: str) -> None:
+        if not self.state_file.exists():
+            return
+        with open(self.state_file) as f:
+            state = json.load(f)
+        if name not in state:
+            return
+        del state[name]
+        with open(self.state_file, "w") as f:
+            json.dump(state, f, sort_keys=True, ensure_ascii=False, indent=2)
+
     def clear_state(self) -> None:
         with open(self.state_file, "w") as f:
             json.dump({}, f, sort_keys=True, ensure_ascii=False, indent=2)

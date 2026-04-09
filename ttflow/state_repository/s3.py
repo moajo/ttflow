@@ -21,6 +21,12 @@ class S3StateRepository(StateRepository):
             Body=json.dumps(value).encode("utf-8"),
         )
 
+    def delete_state(self, name: str) -> None:
+        self._client.delete_object(
+            Bucket=self.bucket_name,
+            Key=f"{self.prefix}/{name}",
+        )
+
     def clear_state(self):
         s3 = boto3.resource("s3")
         bucket = s3.Bucket(self.bucket_name)

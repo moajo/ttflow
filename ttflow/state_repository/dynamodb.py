@@ -47,6 +47,12 @@ class DynamoDBStateRepository(StateRepository):
             return json.loads(response["Item"]["value"]["S"])
         return default
 
+    def delete_state(self, name: str) -> None:
+        self._client.delete_item(
+            TableName=self.table_name,
+            Key={"pk": {"S": self._state_key(name)}},
+        )
+
     def clear_state(self) -> None:
         paginator = self._client.get_paginator("scan")
         for page in paginator.paginate(

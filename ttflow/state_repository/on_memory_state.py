@@ -11,6 +11,9 @@ class OnMemoryStateRepository(StateRepository):
     def save_state(self, name: str, value: Any) -> None:
         self.state[name] = json.loads(json.dumps(value))
 
+    def delete_state(self, name: str) -> None:
+        self.state.pop(name, None)
+
     def clear_state(self) -> None:
         self.state = {}
 

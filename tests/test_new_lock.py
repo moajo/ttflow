@@ -25,6 +25,9 @@ class LockableMemoryRepository(StateRepository):
     def read_state(self, name, default=None):
         return self.state.get(name, default)
 
+    def delete_state(self, name):
+        self.state.pop(name, None)
+
     def clear_state(self):
         self.state = {}
 
