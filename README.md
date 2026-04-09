@@ -1,5 +1,8 @@
 # ttflow
 
+[![PyPI version](https://img.shields.io/pypi/v/ttflow.svg)](https://pypi.org/project/ttflow/)
+[![Python versions](https://img.shields.io/pypi/pyversions/ttflow.svg)](https://pypi.org/project/ttflow/)
+[![CI](https://github.com/moajo/ttflow/actions/workflows/ci.yml/badge.svg)](https://github.com/moajo/ttflow/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/moajo/ttflow/graph/badge.svg)](https://codecov.io/gh/moajo/ttflow)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
