@@ -10,61 +10,76 @@ _DELETED = object()
 
 
 class BufferCacheStateRepositoryProxy(StateRepository):
-    """SRに対する読み出しをキャッシュし、書き込みをバッファするプロキシ
-    flush()するとバッファを書き込みます
+    """SRに対する読み出しをキャッシュし、書き込みをバッファするプロキシ。
+
+    - read_state の結果は cache に入れて、同じキーへの再readを高速化する
+    - save_state / delete_state は writes に積み、_flush() で本物のリポジトリに反映する
+    - read のみ行ったキー（writes に入っていないキー）は flush 時に書き戻されない
     """
 
     def __init__(self, state_repository: StateRepository):
         self.state_repository = state_repository
-        self.state: dict[str, Any] = {}
+        # read結果のキャッシュ。flush対象ではない
+        self.cache: dict[str, Any] = {}
+        # 書き込みバッファ。flush時にこちらだけが反映される
+        self.writes: dict[str, Any] = {}
         self.enabled = False  # バッファモードが有効かどうか
 
     def save_state(self, name: str, value: Any) -> None:
         if self.enabled:
-            self.state[name] = json.loads(json.dumps(value))
+            v = json.loads(json.dumps(value))
+            self.writes[name] = v
+            self.cache[name] = v  # 後続のreadで最新値が見えるようにする
             return
         self.state_repository.save_state(name, value)
 
     def delete_state(self, name: str) -> None:
         if self.enabled:
-            self.state[name] = _DELETED
+            self.writes[name] = _DELETED
+            self.cache[name] = _DELETED
             return
         self.state_repository.delete_state(name)
 
     def clear_state(self) -> None:
-        self.state = {}
+        self.cache = {}
+        self.writes = {}
         self.state_repository.clear_state()
 
     def read_state(self, name: str, default: Any = None) -> Any:
         if self.enabled:
-            if name not in self.state:
-                self.state[name] = self.state_repository.read_state(
-                    name, default=default
-                )
-            if self.state[name] is _DELETED:
-                return default
-            return json.loads(json.dumps(self.state[name]))
+            if name in self.cache:
+                cached = self.cache[name]
+                if cached is _DELETED:
+                    return default
+                return json.loads(json.dumps(cached))
+            v = self.state_repository.read_state(name, default=default)
+            # mutationでキャッシュが汚れないようdeep copyを保持する
+            self.cache[name] = json.loads(json.dumps(v))
+            return v
         return self.state_repository.read_state(name, default=default)
 
     def lock_state(self) -> None:
         self.state_repository.lock_state()
 
     def unlock_state(self) -> None:
-        self.state = {}  # ロック解除したらキャッシュは信用できなくなる
+        # ロック解除したらキャッシュは信用できなくなる
+        self.cache = {}
+        self.writes = {}
         self.state_repository.unlock_state()
 
     def is_locked(self) -> bool:
         return self.state_repository.is_locked()
 
     def _flush(self) -> None:
-        """書き込みをバッファしている場合、それをflushします"""
+        """バッファされている書き込みを本物のリポジトリに反映する"""
         if not self.enabled:
             return
-        for name, value in self.state.items():
+        for name, value in self.writes.items():
             if value is _DELETED:
                 self.state_repository.delete_state(name)
             else:
                 self.state_repository.save_state(name, value)
+        self.writes = {}
 
     @contextmanager
     def buffering(self) -> Generator[None, None, None]:

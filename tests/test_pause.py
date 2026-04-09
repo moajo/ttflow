@@ -66,7 +66,7 @@ def test_中断機能が正しく動くこと(client: Client):
     ]
 
     current = json.loads(
-        json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False)
+        json.dumps(s.cache, indent=2, sort_keys=True, ensure_ascii=False)
     )
     current["_events"] = []  # paused eventは更新されるので無視する
     results = client.run()
@@ -82,7 +82,7 @@ def test_中断機能が正しく動くこと(client: Client):
     assert len(client._global.events_for_next_run) == 0, "commitされてるので0"
     assert len(paused_event) == 1
     new_state = json.loads(
-        json.dumps(s.state, indent=2, sort_keys=True, ensure_ascii=False)
+        json.dumps(s.cache, indent=2, sort_keys=True, ensure_ascii=False)
     )
     new_state["_events"] = []  # paused eventは更新されるので無視する
     assert new_state == current, "stateが変化していないこと"
