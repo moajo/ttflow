@@ -1,0 +1,45 @@
+# git-cliff の設定ファイル
+# https://git-cliff.org/docs/configuration
+
+[changelog]
+header = """
+# Changelog
+
+このプロジェクトの変更履歴です。フォーマットは [Keep a Changelog](https://keepachangelog.com/) に準拠しています。
+
+"""
+body = """
+{% if version -%}
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else -%}
+    ## [Unreleased]
+{% endif -%}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group }}
+{% for commit in commits %}
+- {{ commit.message | split(pat="\\n") | first | trim }}{% if commit.id %} ([{{ commit.id | truncate(length=7, end="") }}](https://github.com/moajo/ttflow/commit/{{ commit.id }})){% endif %}
+{%- endfor %}
+{% endfor %}
+"""
+footer = ""
+trim = true
+
+[git]
+conventional_commits = false
+filter_unconventional = false
+split_commits = false
+# 日本語コミットメッセージをキーワードで分類する
+commit_parsers = [
+    { message = "^Merge", skip = true },
+    { message = "(?i)(追加|新設|new|add)", group = "追加" },
+    { message = "(?i)(修正|fix|bug)", group = "修正" },
+    { message = "(?i)(削除|remove|drop)", group = "削除" },
+    { message = "(?i)(変更|更新|update|change|改善|改修|リファクタ|refactor)", group = "変更" },
+    { message = "(?i)(ドキュメント|doc|readme)", group = "ドキュメント" },
+    { message = ".*", group = "その他" },
+]
+filter_commits = false
+tag_pattern = "v[0-9]*"
+ignore_tags = ""
+topo_order = false
+sort_commits = "oldest"
