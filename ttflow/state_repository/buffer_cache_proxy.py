@@ -5,6 +5,9 @@ from typing import Any
 
 from .base import StateRepository
 
+# バッファ内で削除を表すトゥームストーン
+_DELETED = object()
+
 
 class BufferCacheStateRepositoryProxy(StateRepository):
     """SRに対する読み出しをキャッシュし、書き込みをバッファするプロキシ
@@ -22,6 +25,12 @@ class BufferCacheStateRepositoryProxy(StateRepository):
             return
         self.state_repository.save_state(name, value)
 
+    def delete_state(self, name: str) -> None:
+        if self.enabled:
+            self.state[name] = _DELETED
+            return
+        self.state_repository.delete_state(name)
+
     def clear_state(self) -> None:
         self.state = {}
         self.state_repository.clear_state()
@@ -32,6 +41,8 @@ class BufferCacheStateRepositoryProxy(StateRepository):
                 self.state[name] = self.state_repository.read_state(
                     name, default=default
                 )
+            if self.state[name] is _DELETED:
+                return default
             return json.loads(json.dumps(self.state[name]))
         return self.state_repository.read_state(name, default=default)
 
@@ -50,7 +61,10 @@ class BufferCacheStateRepositoryProxy(StateRepository):
         if not self.enabled:
             return
         for name, value in self.state.items():
-            self.state_repository.save_state(name, value)
+            if value is _DELETED:
+                self.state_repository.delete_state(name)
+            else:
+                self.state_repository.save_state(name, value)
 
     @contextmanager
     def buffering(self) -> Generator[None, None, None]:

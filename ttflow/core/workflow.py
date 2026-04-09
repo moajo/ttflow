@@ -102,6 +102,7 @@ def exec_workflow(g: Global, c: Context, wf: Workflow, args: Any) -> WorkflowRun
             logs=_get_logs(g, c.run_id),
         )
     add_completed_runs_log(g, c)
+    # 完了したrunの実行状態キャッシュはもう参照されないので削除する
     _delete_run_state(g, c.run_id)
     print(f"{wf.f.__name__}: 正常終了しました")
     return WorkflowRunResult(

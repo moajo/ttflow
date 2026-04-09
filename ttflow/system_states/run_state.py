@@ -50,7 +50,7 @@ def _mark_as_executed(g: Global, c: Context, run_state_token: str, value: Any):
 
 
 def _delete_run_state(g: Global, run_id: str):
-    g.state.save_state(_log_key(run_id), [])
+    g.state.delete_state(_log_key(run_id))
 
 
 def _execute_once(g: Global, c: Context):

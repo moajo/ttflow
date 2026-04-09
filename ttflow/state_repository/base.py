@@ -17,6 +17,11 @@ class StateRepository(metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @abc.abstractmethod
+    def delete_state(self, name: str) -> None:
+        """指定したキーのstateを削除する。存在しない場合はno-op。"""
+        raise NotImplementedError()
+
+    @abc.abstractmethod
     def clear_state(self) -> None:
         raise NotImplementedError()
 
