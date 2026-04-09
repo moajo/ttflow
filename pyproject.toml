@@ -3,6 +3,8 @@ name = "ttflow"
 dynamic = ["version"]
 description = "simple workflow engine"
 authors = [{ name = "moajo", email = "moajodev@gmail.com" }]
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "fire>=0.5.0",

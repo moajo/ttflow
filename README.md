@@ -1,6 +1,7 @@
 # ttflow
 
 [![codecov](https://codecov.io/gh/moajo/ttflow/graph/badge.svg)](https://codecov.io/gh/moajo/ttflow)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 軽量なPythonワークフローエンジンです。
 
@@ -239,3 +240,7 @@ handler = run_by_lambda(ttflow)
 - Lambda関数URLやAPI Gatewayからトリガー名を指定して実行
 - CloudWatchスケジューラで定期的に `run()` を呼んで中断中のワークフローを再開
 - 永続化バックエンドにはS3やDynamoDBを使用
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
