@@ -27,9 +27,9 @@ class BufferCacheStateRepositoryProxy(StateRepository):
 
     def save_state(self, name: str, value: Any) -> None:
         if self.enabled:
-            v = json.loads(json.dumps(value))
-            self.writes[name] = v
-            self.cache[name] = v  # 後続のreadで最新値が見えるようにする
+            # writes と cache は独立したcopyにする（片方をmutateしてももう片方に影響しないように）
+            self.writes[name] = json.loads(json.dumps(value))
+            self.cache[name] = json.loads(json.dumps(value))
             return
         self.state_repository.save_state(name, value)
 
@@ -53,9 +53,9 @@ class BufferCacheStateRepositoryProxy(StateRepository):
                     return default
                 return json.loads(json.dumps(cached))
             v = self.state_repository.read_state(name, default=default)
-            # mutationでキャッシュが汚れないようdeep copyを保持する
+            # mutationでキャッシュが汚れないよう、キャッシュにも返り値にも独立したcopyを渡す
             self.cache[name] = json.loads(json.dumps(v))
-            return v
+            return json.loads(json.dumps(v))
         return self.state_repository.read_state(name, default=default)
 
     def lock_state(self) -> None:
