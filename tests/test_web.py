@@ -148,6 +148,234 @@ class TestPausedWorkflows:
         assert paused[0]["workflow_name"] == "pausable"
 
 
+class TestVisualizationTimeline:
+    """GET /api/visualization/timeline のテスト"""
+
+    def test_timeline_empty(self):
+        _, http = _create_test_app()
+        res = http.get("/api/visualization/timeline")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["workflows"] == {}
+
+    def test_timeline_after_trigger(self):
+        """トリガー実行後、タイムラインにワークフローが現れる"""
+        _, http = _create_test_app()
+        http.post("/api/trigger/run_sample")
+
+        res = http.get("/api/visualization/timeline")
+        data = res.json()
+        assert "sample_workflow" in data["workflows"]
+        runs = data["workflows"]["sample_workflow"]
+        assert len(runs) >= 1
+        assert runs[0]["status"] == "success"
+
+    def test_timeline_has_triggered_by(self):
+        """タイムラインの各実行にtriggered_by情報が含まれる"""
+        _, http = _create_test_app()
+        http.post("/api/trigger/run_sample")
+
+        res = http.get("/api/visualization/timeline")
+        data = res.json()
+        runs = data["workflows"]["sample_workflow"]
+        # トレース記録が実装されていればtriggered_byがある
+        assert "triggered_by" in runs[0]
+
+    def test_timeline_multiple_workflows(self):
+        """複数ワークフローの実行がそれぞれグルーピングされる"""
+        _, http = _create_test_app()
+        # run_sampleトリガーで sample_workflow + every_workflow が両方実行される
+        http.post("/api/trigger/run_sample")
+
+        res = http.get("/api/visualization/timeline")
+        data = res.json()
+        assert "sample_workflow" in data["workflows"]
+        assert "every_workflow" in data["workflows"]
+
+
+class TestVisualizationEventFlow:
+    """GET /api/visualization/event-flow のテスト"""
+
+    def test_event_flow_static_registration(self):
+        """ワークフロー登録のみ（実行なし）でも静的な登録情報が返る"""
+        _, http = _create_test_app()
+        res = http.get("/api/visualization/event-flow")
+        assert res.status_code == 200
+        data = res.json()
+        flows = data["flows"]
+        # sample_workflowのトリガーイベントが含まれる
+        event_names = {f["event_name"] for f in flows}
+        assert "_trigger_run_sample" in event_names
+
+        sample_flow = next(f for f in flows if f["event_name"] == "_trigger_run_sample")
+        assert "sample_workflow" in sample_flow["registered_workflows"]
+
+    def test_event_flow_with_executions(self):
+        """実行後にrecent_executionsが含まれる"""
+        _, http = _create_test_app()
+        http.post("/api/trigger/run_sample")
+
+        res = http.get("/api/visualization/event-flow")
+        data = res.json()
+        sample_flow = next(
+            f for f in data["flows"] if f["event_name"] == "_trigger_run_sample"
+        )
+        # トレース記録が実装されていれば実行履歴がある
+        assert isinstance(sample_flow["recent_executions"], list)
+
+    def test_event_flow_includes_every_trigger(self):
+        """every_triggerのイベントも含まれる"""
+        _, http = _create_test_app()
+        res = http.get("/api/visualization/event-flow")
+        data = res.json()
+        event_names = {f["event_name"] for f in data["flows"]}
+        assert "_every" in event_names
+
+
+class TestVisualizationStateTransitions:
+    """GET /api/visualization/state-transitions のテスト"""
+
+    def test_state_transitions_empty(self):
+        _, http = _create_test_app()
+        res = http.get("/api/visualization/state-transitions")
+        assert res.status_code == 200
+        data = res.json()
+        assert data["transitions"] == []
+
+    def test_state_transitions_with_state_trigger(self):
+        """state_triggerを使ったワークフロー連鎖が検出される"""
+        c = ttflow.setup("onmemory")
+
+        @c.workflow(trigger="start")
+        def producer(ctx):
+            ctx.set_state("counter", 1)
+
+        @c.workflow(trigger=ttflow.state_trigger("counter"))
+        def consumer(ctx):
+            ctx.log("counter changed!")
+
+        app = create_app(c)
+        http = TestClient(app)
+
+        # producerを実行 → counterが変更 → consumerが発火
+        http.post("/api/trigger/start")
+
+        res = http.get("/api/visualization/state-transitions")
+        data = res.json()
+        transitions = data["transitions"]
+
+        # counterの遷移が検出される
+        counter_t = next((t for t in transitions if t["state_name"] == "counter"), None)
+        assert counter_t is not None
+        assert "consumer" in counter_t["consumers"]
+
+    def test_state_transitions_producers_from_trace(self):
+        """トレースからproducers（ステートを変更したワークフロー）が分かる"""
+        c = ttflow.setup("onmemory")
+
+        @c.workflow(trigger="start")
+        def writer(ctx):
+            ctx.set_state("my_state", "hello")
+
+        @c.workflow(trigger=ttflow.state_trigger("my_state"))
+        def reader(ctx):
+            pass
+
+        app = create_app(c)
+        http = TestClient(app)
+
+        http.post("/api/trigger/start")
+
+        res = http.get("/api/visualization/state-transitions")
+        data = res.json()
+        transitions = data["transitions"]
+
+        my_state_t = next(
+            (t for t in transitions if t["state_name"] == "my_state"), None
+        )
+        assert my_state_t is not None
+        assert "reader" in my_state_t["consumers"]
+
+
+class TestVisualizationWithTraceRecording:
+    """トレース記録が正しく動作することを検証するテスト
+
+    ExecutionTraceRecorderがclient.run()に組み込まれた後にpassする。
+    """
+
+    def test_timeline_triggered_by_is_populated(self):
+        """triggered_byにイベント名が記録される"""
+        _, http = _create_test_app()
+        http.post("/api/trigger/run_sample")
+
+        data = http.get("/api/visualization/timeline").json()
+        runs = data["workflows"]["sample_workflow"]
+        assert runs[0]["triggered_by"] == "_trigger_run_sample"
+
+    def test_event_flow_recent_executions_populated(self):
+        """実行後にrecent_executionsにワークフロー実行が記録される"""
+        _, http = _create_test_app()
+        http.post("/api/trigger/run_sample")
+
+        data = http.get("/api/visualization/event-flow").json()
+        sample_flow = next(
+            f for f in data["flows"] if f["event_name"] == "_trigger_run_sample"
+        )
+        assert len(sample_flow["recent_executions"]) >= 1
+        assert sample_flow["recent_executions"][0]["workflow_name"] == "sample_workflow"
+        assert sample_flow["recent_executions"][0]["status"] == "succeeded"
+
+    def test_state_transitions_producers_populated(self):
+        """ステートを変更したワークフローがproducersに記録される"""
+        c = ttflow.setup("onmemory")
+
+        @c.workflow(trigger="start")
+        def writer(ctx):
+            ctx.set_state("my_state", "hello")
+
+        @c.workflow(trigger=ttflow.state_trigger("my_state"))
+        def reader(ctx):
+            pass
+
+        app = create_app(c)
+        http = TestClient(app)
+        http.post("/api/trigger/start")
+
+        data = http.get("/api/visualization/state-transitions").json()
+        my_state_t = next(
+            t for t in data["transitions"] if t["state_name"] == "my_state"
+        )
+        assert "writer" in my_state_t["producers"]
+        assert len(my_state_t["recent_changes"]) >= 1
+        assert my_state_t["recent_changes"][0]["new_value"] == "hello"
+
+    def test_event_flow_chain(self):
+        """ワークフローA → event → ワークフローBの連鎖がevent-flowで追跡できる"""
+        c = ttflow.setup("onmemory")
+
+        @c.workflow(trigger="start")
+        def step1(ctx):
+            ctx.event("next_step", {"data": 42})
+
+        @c.workflow(trigger=ttflow.event_trigger("next_step"))
+        def step2(ctx, args):
+            ctx.set_state("result", args["data"])
+
+        app = create_app(c)
+        http = TestClient(app)
+        http.post("/api/trigger/start")
+
+        data = http.get("/api/visualization/event-flow").json()
+        next_flow = next(
+            (f for f in data["flows"] if f["event_name"] == "next_step"),
+            None,
+        )
+        assert next_flow is not None
+        assert "step2" in next_flow["registered_workflows"]
+        assert len(next_flow["recent_executions"]) >= 1
+        assert next_flow["recent_executions"][0]["workflow_name"] == "step2"
+
+
 class TestDashboard:
     def test_dashboard_html(self):
         _, http = _create_test_app()

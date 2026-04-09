@@ -15,6 +15,9 @@ def set_state(g: Global, c: Context, state_name: str, value: Any) -> None:
         current_state = g.state.read_state(state_name)
         g.state.save_state(state_name, value)
         if current_state != value:
+            # トレース記録
+            if g.trace_recorder is not None:
+                g.trace_recorder.record_state_change(state_name, current_state, value)
             _enque_event(
                 g,
                 f"state_changed_{state_name}",
