@@ -1,0 +1,85 @@
+name: バグ報告
+description: 想定通りに動かない問題を報告する
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        バグ報告ありがとうございます。再現に必要な情報をできるだけ詳しく書いてください。
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何が起きているかを1〜2文で
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 再現手順
+      description: 最小再現コードまたは手順を記述してください
+      placeholder: |
+        1. このコードを実行
+        2. こうなる
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待する動作
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実際の動作
+      description: エラーメッセージやスタックトレースがあれば貼り付けてください
+    validations:
+      required: true
+
+  - type: input
+    id: ttflow_version
+    attributes:
+      label: ttflowのバージョン
+      placeholder: "例: 0.6.2"
+    validations:
+      required: true
+
+  - type: input
+    id: python_version
+    attributes:
+      label: Pythonのバージョン
+      placeholder: "例: 3.12.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: state_repository
+    attributes:
+      label: 使用しているStateRepository
+      options:
+        - local (LocalFile)
+        - s3 (S3)
+        - dynamodb (DynamoDB)
+        - onmemory (OnMemory)
+        - その他/不明
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      placeholder: "例: macOS 14.5 / Ubuntu 22.04 / AWS Lambda"
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: その他補足
+      description: 関連するログ、設定、スクリーンショットなど
