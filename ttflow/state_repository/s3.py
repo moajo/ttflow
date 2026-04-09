@@ -15,10 +15,19 @@ class S3StateRepository(StateRepository):
         self._client: S3Client = boto3.client("s3")
 
     def save_state(self, name: str, value):
+        # NOTE: キー名には拡張子(.json)を付けない。
+        # `name` は他のバックエンド（DynamoDB / LocalFile / OnMemory）と共通の
+        # key-valueストア上の識別子であり、ttflowの内部では「ファイル」ではなく
+        # 「キー」として扱う。S3だけ拡張子を付けるとバックエンド間で整合性が崩れ、
+        # またユーザが set_state("温度", ...) で書いたキーが S3 上で "温度.json"
+        # になるなど見た目の一貫性も損なわれるため。
+        # ただしContent-TypeはJSONとして扱われるよう明示する（S3コンソールや
+        # ブラウザでの閲覧体験向上、curlでの取得時の利便性のため）。
         self._client.put_object(
             Bucket=self.bucket_name,
             Key=f"{self.prefix}/{name}",
             Body=json.dumps(value).encode("utf-8"),
+            ContentType="application/json",
         )
 
     def delete_state(self, name: str) -> None:
