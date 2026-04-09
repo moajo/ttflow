@@ -2,7 +2,7 @@
 
 このプロジェクトの変更履歴です。フォーマットは [Keep a Changelog](https://keepachangelog.com/) に準拠しています。
 
-## [Unreleased]
+## [0.6.3] - 2026-04-09
 
 ### その他
 
@@ -14,6 +14,7 @@
 - ライセンスメタデータをpyprojectとREADMEに反映 (#19) ([ee646e8](https://github.com/moajo/ttflow/commit/ee646e8392e91259e369fcf6da59f15ee7289ea7))
 - READMEにPyPI版・対応Python・CIのバッジを追加 ([4fa2693](https://github.com/moajo/ttflow/commit/4fa26939b7d62a6803dd6d6f36b6d10e759f0d13))
 - IssueテンプレートとPRテンプレートを追加 (#20) ([dc54137](https://github.com/moajo/ttflow/commit/dc54137939bf9539efb2b75589dff3ba25f23572))
+- git-cliff設定とリリース用Makefileを追加しCHANGELOGを整備 ([d4369cd](https://github.com/moajo/ttflow/commit/d4369cd6e700d528c415493ba24197dbb4707497))
 ## [0.6.2] - 2026-04-09
 
 ### 追加
