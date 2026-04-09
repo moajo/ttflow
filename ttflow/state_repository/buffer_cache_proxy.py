@@ -5,8 +5,23 @@ from typing import Any
 
 from .base import StateRepository
 
+
 # バッファ内で削除を表すトゥームストーン
-_DELETED = object()
+class _Deleted:
+    """delete_state されたキーをバッファ内で表すための型。シングルトン `_DELETED` のみ使う"""
+
+    _instance: "_Deleted | None" = None
+
+    def __new__(cls) -> "_Deleted":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+
+_DELETED = _Deleted()
+
+# cache / writes に格納される値の型: 通常のJSON値、または削除トゥームストーン
+_BufferedValue = Any  # JSON値 | _Deleted
 
 
 class BufferCacheStateRepositoryProxy(StateRepository):
@@ -19,10 +34,10 @@ class BufferCacheStateRepositoryProxy(StateRepository):
 
     def __init__(self, state_repository: StateRepository):
         self.state_repository = state_repository
-        # read結果のキャッシュ。flush対象ではない
-        self.cache: dict[str, Any] = {}
-        # 書き込みバッファ。flush時にこちらだけが反映される
-        self.writes: dict[str, Any] = {}
+        # read結果のキャッシュ。flush対象ではない。値は通常のJSON値、または削除トゥームストーン `_DELETED`
+        self.cache: dict[str, _BufferedValue] = {}
+        # 書き込みバッファ。flush時にこちらだけが反映される。値は通常のJSON値、または `_DELETED`
+        self.writes: dict[str, _BufferedValue] = {}
         self.enabled = False  # バッファモードが有効かどうか
 
     def save_state(self, name: str, value: Any) -> None:
