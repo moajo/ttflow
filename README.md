@@ -244,6 +244,10 @@ handler = run_by_lambda(ttflow)
 - CloudWatchスケジューラで定期的に `run()` を呼んで中断中のワークフローを再開
 - 永続化バックエンドにはS3やDynamoDBを使用
 
+## Contributing
+
+バグ報告・機能要望・PRいずれも歓迎します。詳しくは [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
